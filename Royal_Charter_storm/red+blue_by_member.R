@@ -13,7 +13,7 @@ Year<-1859
 Month<-10
 Day<-20
 Hour<-0.23
-n.total<-0#7*24*6
+n.total<-7*24*6
 version<-'3.5.1'
 fog.threshold<-exp(1)
 
@@ -23,7 +23,7 @@ Imagedir<-sprintf("%s/images/Royal_Charter_rbbm",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
-            times=sprintf("%02d:00:00",Hour),
+            times=sprintf("%02d:%02d:00",as.integer(Hour),as.integer(Hour%%1*60)),
             format=c(dates='y/m/d',times='h:m:s'))
 
 Options<-WeatherMap.set.option(NULL)
@@ -37,7 +37,7 @@ Options<-WeatherMap.set.option(Options,'show.precipitation',T)
 Options<-WeatherMap.set.option(Options,'temperature.range',12)
 Options<-WeatherMap.set.option(Options,'obs.size',0.5)
 Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
-+                                                        maxColorValue=255))
+                                                         maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'lat.min',-30)
 Options<-WeatherMap.set.option(Options,'lat.max',30)
 Options<-WeatherMap.set.option(Options,'lon.min',-40)
@@ -58,6 +58,7 @@ get.member.at.hour<-function(variable,year,month,day,hour,member) {
        t<-TWCR.get.members.slice.at.hour(variable,year,month,day,
                                   hour,version='3.5.1')
        t<-GSDF.select.from.1d(t,'ensemble',member)
+       gc()
        return(t)
   }
 
@@ -83,7 +84,7 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
     lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
     longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
       # Need particular data format for contourLines
-    if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) 180 ) {
+    if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs)> 180 ) {
       if(lats[2]<lats[1]) lats<-rev(lats)
       if(longs[2]<longs[1]) longs<-rev(longs)
       longs[longs>180]<-longs[longs>180]-360
@@ -184,7 +185,7 @@ plot.hour<-function(year,month,day,hour) {
   	 upViewport()
   
       }
-  	 Options$label<-sprintf("%04d-%02d-%02d:%02d",year,month,day,hour)
+  	 Options$label<-sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
   	 #WeatherMap.draw.label(Options)
            grid.text(Options$label,y=unit(0.01,'npc'),x=unit(0.99,'npc'),
                      just=c('right','bottom'))
@@ -206,6 +207,9 @@ for(n.count in seq(0,n.total)) {
       if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
       # Each plot in a seperate parallel process
       mcparallel(plot.hour(year,month,day,hour))
-      if(n.count%%20==0) mccollect(wait=TRUE)
+      if(n.count%%20==0) {
+         mccollect(wait=TRUE)
+         gc(verbose=FALSE)
+      }
   
   }
