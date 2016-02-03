@@ -18,4 +18,4 @@ rm Royal_Charter.mp4
 #  These usually come from disc problems in the creation step.
 find $SCRATCH/images/Royal_Charter_rbbm/*.png -type f -empty -delete
 
-srun -n 1 -c 32 --mem=120000 $HOME/tools/ffmpeg-2.8.3/ffmpeg -r 48 -pattern_type glob -i Royal_Charter_rbbm/\*.png -c:v libx264 -threads 32 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy Royal_Charter.mp4
+srun -n 1 -c 32 --mem=120000 $HOME/tools/ffmpeg-2.8.3/ffmpeg -r 24 -pattern_type glob -i Royal_Charter_rbbm/\*.png -c:v libx264 -threads 32 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy Royal_Charter.mp4

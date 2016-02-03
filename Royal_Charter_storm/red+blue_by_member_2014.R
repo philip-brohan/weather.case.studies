@@ -1,6 +1,6 @@
 #!/usr/common/software/R/3.2.2/hsw/intel/bin/Rscript --no-save
 
-# Pressures and temperatures from 20CR2c for 1859-10-26 - royal charter storm
+# Pressures and temperatures from 20CR2c for 2014-02-04 - Dawlish storm
 
 # Compares 4 different ensemble members
 
@@ -9,11 +9,11 @@ library(GSDF.WeatherMap)
 library(parallel)
 library(chron)
 
-Year<-1859
-Month<-10
-Day<-20
+Year<-2014
+Month<-2
+Day<-1
 Hour<-0
-n.total<-8*24*3
+n.total<-6*24*3
 version<-'3.5.1'
 fog.threshold<-exp(1)
 screen.width<-1080*16/9
@@ -24,7 +24,7 @@ lon.range<-80
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-sprintf("%s/images/Royal_Charter_rbbm",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/Dawlish_2014_rbbm",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -79,8 +79,8 @@ Options<-WeatherMap.set.option(Options,'show.obs',T)
 Options<-WeatherMap.set.option(Options,'show.fog',T)
 Options<-WeatherMap.set.option(Options,'show.precipitation',T)
 Options<-WeatherMap.set.option(Options,'temperature.range',12)
-Options<-WeatherMap.set.option(Options,'obs.size',0.5)
-Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
+Options<-WeatherMap.set.option(Options,'obs.size',0.25)
+Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,155,
                                                          maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'lat.min',-lat.range/2)
 Options<-WeatherMap.set.option(Options,'lat.max',lat.range/2)
@@ -94,7 +94,7 @@ Options$mslp.base=0                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=500                       # Smaller -more contours
 Options$mslp.tpscale=500                    # Smaller -contours less transparent
-Options$mslp.lwd=1
+Options$mslp.lwd=2
 land<-WeatherMap.get.land(Options)
 
 get.member.at.hour<-function(variable,year,month,day,hour,member) {
@@ -184,9 +184,10 @@ plot.hour<-function(n.count) {
       #                                     version='3.4.1',type='standard.deviation')
       prmsl.normal<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='3.4.1',
                                                type='normal')
-         obs<-TWCR.get.obs(year,month,day,hour,version='3.5.1')
-         w<-which(obs$Longitude>180)
-         obs$Longitude[w]<-obs$Longitude[w]-360
+         #obs<-TWCR.get.obs(year,month,day,hour,version='3.5.1')
+         #w<-which(obs$Longitude>180)
+         #obs$Longitude[w]<-obs$Longitude[w]-360
+
   
   
        png(ifile.name,
@@ -223,8 +224,8 @@ plot.hour<-function(n.count) {
   	      #WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
   	      WeatherMap.draw.land(land,Options)
   
+  	    #WeatherMap.draw.obs(obs,Options)
   	    Draw.temperature(t2m,Options)
-  	    WeatherMap.draw.obs(obs,Options)
   	    Draw.pressure(prmsl,Options,colour=c(0,0,0))
   	    WeatherMap.draw.precipitation(prate,Options)
   	    #WeatherMap.draw.fog(fog,Options)
