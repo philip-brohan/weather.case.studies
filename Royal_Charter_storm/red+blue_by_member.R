@@ -1,6 +1,7 @@
 #!/usr/common/software/R/3.2.2/hsw/intel/bin/Rscript --no-save
 
 # Pressures and temperatures from 20CR2c for 1859-10-26 - royal charter storm
+# Also for Christmass eve 1929 storm.
 
 # Compares 4 different ensemble members
 
@@ -9,10 +10,10 @@ library(GSDF.WeatherMap)
 library(parallel)
 library(chron)
 
-Year<-1859
-Month<-10
-Day<-20
-Hour<-0
+Year<-1929
+Month<-12
+Day<-18
+Hour<-12
 n.total<-8*24*3
 version<-'3.5.1'
 fog.threshold<-exp(1)
@@ -24,7 +25,7 @@ lon.range<-80
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-sprintf("%s/images/Royal_Charter_rbbm",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/Dawlish_1929_rbbm",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -79,7 +80,7 @@ Options<-WeatherMap.set.option(Options,'show.obs',T)
 Options<-WeatherMap.set.option(Options,'show.fog',T)
 Options<-WeatherMap.set.option(Options,'show.precipitation',T)
 Options<-WeatherMap.set.option(Options,'temperature.range',12)
-Options<-WeatherMap.set.option(Options,'obs.size',0.5)
+Options<-WeatherMap.set.option(Options,'obs.size',0.25)
 Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
                                                          maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'lat.min',-lat.range/2)
@@ -223,8 +224,8 @@ plot.hour<-function(n.count) {
   	      #WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
   	      WeatherMap.draw.land(land,Options)
   
-  	    Draw.temperature(t2m,Options)
   	    WeatherMap.draw.obs(obs,Options)
+  	    Draw.temperature(t2m,Options)
   	    Draw.pressure(prmsl,Options,colour=c(0,0,0))
   	    WeatherMap.draw.precipitation(prate,Options)
   	    #WeatherMap.draw.fog(fog,Options)

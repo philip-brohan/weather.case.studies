@@ -10,12 +10,12 @@ export OMP_NUM_THREADS=32
 sbatch -d afternotok:$SLURM_JOB_ID Dawlish.slm
 
 export LANG='' # Jobs default to UTF8, which screws up reading obs files
-srun -n 1 -c 32 --mem=120000 ./red+blue_by_member_2014.R
+srun -n 1 -c 32 --mem=120000 ./red+blue_by_member.R
 
 cd $SCRATCH/images
-rm Dawlish.mp4
+rm Dawlish.1929.mp4
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
-find $SCRATCH/images/Dawlish_2014_rbbm/*.png -type f -empty -delete
+find $SCRATCH/images/Dawlish_1929_rbbm/*.png -type f -empty -delete
 
-srun -n 1 -c 32 --mem=120000 $HOME/tools/ffmpeg-2.8.3/ffmpeg -r 24 -pattern_type glob -i Dawlish_2014_rbbm/\*.png -c:v libx264 -threads 32 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy Dawlish.mp4
+srun -n 1 -c 32 --mem=120000 $HOME/tools/ffmpeg-2.8.3/ffmpeg -r 24 -pattern_type glob -i Dawlish_1929_rbbm/\*.png -c:v libx264 -threads 32 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy Dawlish.1929.mp4
