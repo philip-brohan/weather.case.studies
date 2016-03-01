@@ -1,0 +1,23 @@
+#!/bin/bash -l
+ 
+#SBATCH -p regular
+#SBATCH -N 1
+#SBATCH -t 0:30:00
+#SBATCH --mail-type FAIL
+#to run with 24 threads per task (unpacked)
+export OMP_NUM_THREADS=24
+
+sbatch -d afternotok:$SLURM_JOB_ID d-day_nobg.slm
+
+export LANG='' # Jobs default to UTF8, which screws up reading obs files
+srun -n 1 -c 24 R --no-save < ./no_background.R
+
+cd $SCRATCH/images
+rm d-day_nobg.mp4
+# Get rid of empty images - they make ffmpeg stop processing
+#  These usually come from disc problems in the creation step.
+find $SCRATCH/images/d-day_nobg/*.png -type f -empty -delete
+
+module load ffmpeg
+
+srun -n 1 -c 24 ffmpeg -r 24 -pattern_type glob -i d-day_nobg/\*.png -c:v libx264 -threads 24 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy d-day_nobg.mp4
