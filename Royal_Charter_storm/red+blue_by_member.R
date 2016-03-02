@@ -1,7 +1,7 @@
 #!/usr/common/software/R/3.2.2/hsw/intel/bin/Rscript --no-save
 
-# Pressures and temperatures from 20CR2c for 1859-10-26 - royal charter storm
-# Also for Christmass eve 1929 storm.
+# Pressures and temperatures from 20CR2c for 1859-10-26 - Royal Charter storm
+# Also for Christmas eve 1929 storm.
 
 # Compares 4 different ensemble members
 
@@ -14,7 +14,7 @@ Year<-1929
 Month<-12
 Day<-18
 Hour<-12
-n.total<-8*24*3
+n.total<-0#8*24*3
 version<-'3.5.1'
 fog.threshold<-exp(1)
 screen.width<-1080*16/9
@@ -179,12 +179,20 @@ plot.hour<-function(n.count) {
       ifile.name<-sprintf("%s/%s",Imagedir,image.name)
       if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
   
+      t2m<-get.member.at.hour('air.2m',year,month,day,hour,1) # only for regridding
       t2m.normal<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,version='3.5.4',
                                                type='normal')
+      t2m.normal<-GSDF.regrid.2d(t2m.normal,t2m)
       #prmsl.sd<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
       #                                     version='3.4.1',type='standard.deviation')
+      #prmsl.spread<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=versions[vn],
+      #					  type='spread')
+      #fog<-TWCR.relative.entropy(prmsl.normal,prmsl.sd,prmsl,prmsl.spread)
+      #fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+      prmsl<-get.member.at.hour('prmsl',year,month,day,hour,1) # only for regridding
       prmsl.normal<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='3.4.1',
                                                type='normal')
+      prmsl.normal<-GSDF.regrid.2d(prmsl.normal,prmsl)
          obs<-TWCR.get.obs(year,month,day,hour,version='3.5.1')
          w<-which(obs$Longitude>180)
          obs$Longitude[w]<-obs$Longitude[w]-360
@@ -200,10 +208,6 @@ plot.hour<-function(n.count) {
       for(vn in seq_along(members)) {
   
   	prmsl<-get.member.at.hour('prmsl',year,month,day,hour,members[vn])
-  	#prmsl.spread<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=versions[vn],
-  	#					  type='spread')
-  	#fog<-TWCR.relative.entropy(prmsl.normal,prmsl.sd,prmsl,prmsl.spread)
-  	#fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
   	t2m<-get.member.at.hour('air.2m',year,month,day,hour,members[vn])
   	prate<-get.member.at.hour('prate',year,month,day,hour,members[vn])
   	prmsl$data[]<-as.vector(prmsl$data)-as.vector(prmsl.normal$data)

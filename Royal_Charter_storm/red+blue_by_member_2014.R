@@ -178,17 +178,20 @@ plot.hour<-function(n.count) {
       ifile.name<-sprintf("%s/%s",Imagedir,image.name)
       if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
   
+      t2m<-get.member.at.hour('air.2m',year,month,day,hour,1) # only for regridding
       t2m.normal<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,version='3.5.4',
                                                type='normal')
+      t2m.normal<-GSDF.regrid.2d(t2m.normal,t2m)
       #prmsl.sd<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
       #                                     version='3.4.1',type='standard.deviation')
+      #prmsl.spread<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=versions[vn],
+      #					  type='spread')
+      #fog<-TWCR.relative.entropy(prmsl.normal,prmsl.sd,prmsl,prmsl.spread)
+      #fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+      prmsl<-get.member.at.hour('prmsl',year,month,day,hour,1) # only for regridding
       prmsl.normal<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='3.4.1',
                                                type='normal')
-         #obs<-TWCR.get.obs(year,month,day,hour,version='3.5.1')
-         #w<-which(obs$Longitude>180)
-         #obs$Longitude[w]<-obs$Longitude[w]-360
-
-  
+      prmsl.normal<-GSDF.regrid.2d(prmsl.normal,prmsl)
   
        png(ifile.name,
                width=screen.width,
@@ -200,10 +203,6 @@ plot.hour<-function(n.count) {
       for(vn in seq_along(members)) {
   
   	prmsl<-get.member.at.hour('prmsl',year,month,day,hour,members[vn])
-  	#prmsl.spread<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=versions[vn],
-  	#					  type='spread')
-  	#fog<-TWCR.relative.entropy(prmsl.normal,prmsl.sd,prmsl,prmsl.spread)
-  	#fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
   	t2m<-get.member.at.hour('air.2m',year,month,day,hour,members[vn])
   	prate<-get.member.at.hour('prate',year,month,day,hour,members[vn])
   	prmsl$data[]<-as.vector(prmsl$data)-as.vector(prmsl.normal$data)
