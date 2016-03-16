@@ -13,7 +13,7 @@ Year<-2014
 Month<-5
 Day<-1
 Hour<-0
-n.total<-365*24
+n.total<-0#365*24
 version<-'3.5.1'
 cores<-6
 
@@ -46,8 +46,13 @@ Options<-WeatherMap.set.option(Options,'temperature.range',25)
 Options<-WeatherMap.set.option(Options,'wind.palette',
                        diverge_hcl(7,c=c(150,0),l=c(25,30),power=1))
 Options<-WeatherMap.set.option(Options,'obs.size',1.5)
+Options<-WeatherMap.set.option(Options,'land.colour',rgb(0,0,0,255,
+                                                       maxColorValue=255))
+Options<-WeatherMap.set.option(Options,'sea.colour',rgb(100,100,100,255,
+                                                       maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
                                                        maxColorValue=255))
+Options<-WeatherMap.set.option(Options,'precip.colour',c(0,0.1,0))
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',35)
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
@@ -55,7 +60,8 @@ Options<-WeatherMap.set.option(Options,'background.resolution','high')
 aspect<-2
 
 Options$ice.points<-100000
-Options$wind.vector.lwd<-4
+Options$wind.vector.lwd<-2
+Options$wind.vector.density<-Options$wind.vector.density*0.5
 land<-WeatherMap.get.land(Options)
 
 make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
@@ -132,6 +138,8 @@ for(n.count in seq(0,n.total)) {
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
 
     # Each plot in a seperate parallel process
+    plot.hour(year,month,day,hour,s)
+    q('no')
     mcparallel(plot.hour(year,month,day,hour,s))
     if(n.count%%cores==0) mccollect(wait=TRUE)
 
