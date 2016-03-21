@@ -10,12 +10,12 @@ library(chron)
 library(parallel)
 
 Year<-2014
-Month<-1
-Day<-30
+Month<-4
+Day<-21
 Hour<-0
 n.total<-365*24*3
 version<-'3.5.1'
-cores<-8
+cores<-20
 
 fog.threshold<-exp(1)
 
