@@ -14,7 +14,7 @@ my $Glob  = "/data/local/hadpb/images/ISPD_by_pressure/2014/*.png";
 foreach my $ImageFile ( glob($Glob) ) {
     unless ( -r $ImageFile ) { die "Missing image $ImageFile"; }
      my $Nfname = sprintf "%s/%04d.png", $Tdir, $Count++;
-    unless( -r  $Nfname) { `cp $ImageFile $Nfname`; }
+    unless( -r  $Nfname) { `convert -gamma 0.6 $ImageFile $Nfname`; }
 }
 
 # Fade in and out

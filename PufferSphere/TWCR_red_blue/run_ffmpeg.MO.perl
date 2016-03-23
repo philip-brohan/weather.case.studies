@@ -14,7 +14,7 @@ my $Glob  = "/data/local/hadpb/images/TWCR_red_blue/*.png";
 foreach my $ImageFile ( glob($Glob) ) {
     unless ( -r $ImageFile ) { die "Missing image $ImageFile"; }
      my $Nfname = sprintf "%s/%04d.png", $Tdir, $Count++;
-    unless( -r  $Nfname) { `cp $ImageFile $Nfname`; }
+    unless( -r  $Nfname) { `convert -gamma 0.6 $ImageFile $Nfname`; }
 }
 
 # Fade in and out
@@ -29,6 +29,6 @@ for(my $im=$Count-24;$im<=$Count;$im++) {
   `mogrify -fill black -colorize $Fraction% $Nfname`;
 }
    
-`ffmpeg -qscale 3 -r 24 -i $Tdir/%04d.png /data/local/hadpb/images/TWCR_red_blue.mov`;
+`ffmpeg -qscale 3 -r 36 -i $Tdir/%04d.png /data/local/hadpb/images/TWCR_red_blue.mov`;
 
 `rm -r $Tdir`;

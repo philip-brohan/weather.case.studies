@@ -10,7 +10,7 @@ library(parallel)
 library(lubridate)
 
 Year<-2014
-Month<-1
+Month<-10
 Day<-2
 Hour<-0
 n.total<-24*365
@@ -69,7 +69,10 @@ load.hourly.obs<-function(year,month,day,hour,spread=12) {
       fn<-sprintf("%s/%04d%02d%02d%02d.Rdata",hourly.obs.dir,year,
                            month,day,as.integer(hr.local))
     } 
-    if(!file.exists(fn)) stop(sprintf("No obs file %s",fn))
+    if(!file.exists(fn)) {
+      warning(sprintf("No obs file %s",fn))
+      next
+    }
     load(fn)
     obs.hr$Time.Offset<-obs.hr$Time.Offset-min(obs.hr$Time.Offset,na.rm=TRUE)+hr.offset
     if(is.null(result)) result<-obs.hr
@@ -133,6 +136,7 @@ plot.hour<-function(l.count) {
     dev.off()
     gc(verbose=FALSE)
 }
+#lapply(seq(0,n.total),plot.hour)
 
-r<-mclapply(seq(0,n.total),plot.hour,mc.cores=cores,mc.preschedule=TRUE)
+mclapply(seq(0,n.total),plot.hour,mc.cores=cores,mc.preschedule=TRUE)
 

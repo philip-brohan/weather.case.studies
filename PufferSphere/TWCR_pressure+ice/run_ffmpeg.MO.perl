@@ -17,6 +17,18 @@ foreach my $ImageFile ( glob($Glob) ) {
     unless( -r  $Nfname) { `convert -gamma 0.6 $ImageFile $Nfname`; }
 }
 
+# Fade in and out
+for(my $im=0;$im<24;$im++) {
+  my $Nfname = sprintf "%s/%04d.png", $Tdir, $im;
+  my $Fraction=sprintf "%d",(1-$im/24)*100;
+  `mogrify -fill black -colorize $Fraction% $Nfname`;
+}
+for(my $im=$Count-24;$im<=$Count;$im++) {
+  my $Nfname = sprintf "%s/%04d.png", $Tdir, $im;
+  my $Fraction=sprintf "%d",(1-($Count-$im)/24)*100;
+  `mogrify -fill black -colorize $Fraction% $Nfname`;
+}
+
 `ffmpeg -qscale 3 -r 24 -i $Tdir/%04d.png /data/local/hadpb/images/P+I.mov`;
 
 #`rm -r $Tdir`;
