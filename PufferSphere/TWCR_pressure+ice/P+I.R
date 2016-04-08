@@ -13,8 +13,8 @@ Hour<-0
 n.total<-363*24 # Total number of hours to be rendered
 version<-'3.5.1'
 
-GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
-Imagedir<-sprintf("%s/images/P+I",Sys.getenv('SCRATCH'))
+#GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
+Imagedir<-'/scratch/hadpb/images/P+I'
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -34,13 +34,13 @@ Options<-WeatherMap.set.option(Options,'pole.lat',35)
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
 Options<-WeatherMap.set.option(Options,'land.colour',rgb(0,0,0,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'sea.colour',rgb(100,100,100,255,
+Options<-WeatherMap.set.option(Options,'sea.colour',rgb(50,50,50,255,
                                                        maxColorValue=255))
 Options$mslp.base=101325                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=500                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
-Options$mslp.lwd=3
+Options$mslp.lwd=4
 
 Options$ice.points<-100000
 land<-WeatherMap.get.land(Options)
@@ -111,7 +111,7 @@ plot.hour<-function(year,month,day,hour) {
           WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
           WeatherMap.draw.land(land,Options)
 
-        Draw.pressure(prmsl.T,Options,colour=c(1,0,0))
+        Draw.pressure(prmsl.T,Options,colour=c(0.8,0.8,0))
 
      upViewport()
 
@@ -131,7 +131,8 @@ for(n.count in seq(0,n.total)) {
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
     # Each plot in a seperate parallel process
     mcparallel(plot.hour(year,month,day,hour))
-    if(n.count%%6==0) mccollect(wait=TRUE)
+    if(n.count%%48==0) mccollect(wait=TRUE)
+    gc(verbose=FALSE)
 
 }
 mccollect()
