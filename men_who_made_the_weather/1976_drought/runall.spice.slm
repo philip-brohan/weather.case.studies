@@ -1,0 +1,11 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=5000
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-core=2
+#SBATCH --time=150
+
+sbatch -d afternotok:$SLURM_JOB_ID runall.spice.slm
+sbatch -d afterok:$SLURM_JOB_ID ffmpeg.spice.slm
+
+./make_streamlines.R

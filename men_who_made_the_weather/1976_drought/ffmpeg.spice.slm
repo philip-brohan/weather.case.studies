@@ -1,0 +1,12 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=100000
+#SBATCH --ntasks=2
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=350
+#SBATCH --gres=tmp:50000
+#SBATCH --kill-on-invalid-dep=yes
+
+find /scratch/images/1976-summer-nowind-at/*.png -type f -empty -delete
+
+./run_ffmpeg.spice.perl

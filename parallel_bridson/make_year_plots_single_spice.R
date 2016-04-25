@@ -18,7 +18,7 @@ if ( is.null(opt$date) )   { stop("Date not specified") }
 
 version<-'3.5.1'
 
-Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_fade_io/")
+Imagedir<-sprintf("/scratch/hadpb/images/TWCR_parallel_bridson/")
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 
@@ -39,7 +39,7 @@ Options<-WeatherMap.set.option(Options,'show.precipitation',F)
 Options<-WeatherMap.set.option(Options,'temperature.range',25)
 Options<-WeatherMap.set.option(Options,'wind.palette',
                        diverge_hcl(7,c=c(150,0),l=c(25,30),power=1))
-Options<-WeatherMap.set.option(Options,'land.colour',rgb(100,100,100,255,
+Options<-WeatherMap.set.option(Options,'land.colour',rgb(125,125,125,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'sea.colour',rgb(200,200,200,255,
                                                        maxColorValue=255))

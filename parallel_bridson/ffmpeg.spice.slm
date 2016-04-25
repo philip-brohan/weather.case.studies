@@ -1,0 +1,11 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=168000
+#SBATCH --ntasks=16
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=100
+#SBATCH --kill-on-invalid-dep=yes
+
+rm /scratch/hadpb/images/TWCR_parallel_bridson.mov
+
+ffmpeg -r 36 -pattern_type glob -i /scratch/hadpb/images/TWCR_parallel_bridson/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy /scratch/hadpb/images/TWCR_parallel_bridson.mov

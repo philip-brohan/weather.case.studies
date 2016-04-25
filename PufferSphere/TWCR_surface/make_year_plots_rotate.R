@@ -17,7 +17,7 @@ version<-'3.5.1'
 
 fog.threshold<-exp(1)
 
-Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_fade_io/")
+Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_rotate/")
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -58,7 +58,18 @@ Options$wind.vector.lwd<-2.5
 Options$wind.vector.move.scale<-Options$wind.vector.move.scale/3
 Options$wind.vector.density<-Options$wind.vector.density*0.5
 
-make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
+Options$cores<-10
+
+set.pole<-function(step,Options) {
+  lon<-160+(step/10)
+  if(lon>360) lon<-lon%%360
+  lat<-45+sin(step/500)*44
+  Options<-WeatherMap.set.option(Options,'pole.lon',lon)
+  Options<-WeatherMap.set.option(Options,'pole.lat',lat)
+  return(Options)
+}
+
+make.streamlines<-function(year,month,day,hour,step,streamlines=NULL) {
 
 
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d:%02d.rd",
@@ -75,6 +86,7 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
     t.actual<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,version=version)
     t.normal<-t.actual
     t.normal$data[]<-rep(286,length(t.normal$data))
+    Options<-set.pole(step,Options)
     s<-WeatherMap.make.streamlines(streamlines,uwnd,vwnd,t.actual,t.normal,Options)
     save(year,month,day,hour,s,file=sf.name)
     gc(verbose=FALSE)
@@ -82,18 +94,17 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
 
 }
 
-plot.hour<-function(date) {
+plot.hour<-function(date,step) {
 
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
       cat('#SBATCH --qos=normal\n')
-      #cat('#SBATCH --output=/scratch/hadpb/slurm_output_fade_io/%j.out\n')
-      cat('#SBATCH --output=slurm_output/%j.out\n')
+      cat('#SBATCH --output=/scratch/hadpb/slurm_output/rotate_%j.out\n')
       cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
       cat('#SBATCH --ntasks-per-core=2\n')
       cat('#SBATCH --time=5\n')
-      cat(sprintf("./make_year_plots_single_spice.R --date=%s\n",date))
+      cat(sprintf("./make_year_plots_single_rotate.R --date=%s --step=%d\n",date,step))
       sink()
       system('sbatch multistart.step.slm')
 }
@@ -110,7 +121,7 @@ for(n.count in seq(0,n.total)) {
     hour<-((n.count+Hour)%%(24*3))/3
 
     # serial component - streamlines evolve from hour to hour
-    s<-make.streamlines(year,month,day,hour,streamlines=s)
+    s<-make.streamlines(year,month,day,hour,n.count,streamlines=s)
 
     date<-sprintf("%04d-%02d-%02d:%02d:%02d",year,month,day,
                                as.integer(hour),as.integer((hour%%1)*60))
@@ -119,7 +130,7 @@ for(n.count in seq(0,n.total)) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
 
-    plot.hour(date)
+    plot.hour(date,n.count)
     gc(verbose=FALSE)
 
 }

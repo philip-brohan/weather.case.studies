@@ -12,12 +12,12 @@ Year<-2014
 Month<-1
 Day<-2
 Hour<-0
-n.total<-365*24*3
+n.total<-500#365*24*3
 version<-'3.5.1'
 
 fog.threshold<-exp(1)
 
-Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_fade_io/")
+Imagedir<-sprintf("/scratch/hadpb/images/TWCR_parallel_bridson/")
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -58,6 +58,8 @@ Options$wind.vector.lwd<-2.5
 Options$wind.vector.move.scale<-Options$wind.vector.move.scale/3
 Options$wind.vector.density<-Options$wind.vector.density*0.5
 
+Options$cores<-10
+
 make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
 
 
@@ -88,7 +90,7 @@ plot.hour<-function(date) {
       cat('#!/bin/ksh -l\n')
       cat('#SBATCH --qos=normal\n')
       #cat('#SBATCH --output=/scratch/hadpb/slurm_output_fade_io/%j.out\n')
-      cat('#SBATCH --output=slurm_output/%j.out\n')
+      cat('#SBATCH --output=/scratch/hadpb/slurm_output/%j.out\n')
       cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
       cat('#SBATCH --ntasks-per-core=2\n')

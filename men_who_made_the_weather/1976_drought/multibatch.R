@@ -1,7 +1,6 @@
-# Make the de-flickered sperical wind video with orange wind arrows
+# Make the 1976 summer video with temperature anomalies but no wind arrows
 
-dates<-substr(basename(list.files("/scratch/hadpb/images/TWCR_spherical_obliquity_spice",
-                                  pattern='rd')),13,28)
+dates<-substr(basename(list.files("/scratch/hadpb/images/1976-summer",pattern='rd')),13,28)
 
 current.step<-0
 limit<-length(dates)
@@ -19,14 +18,14 @@ while(current.step<limit) {
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
       cat('#SBATCH --qos=normal\n')
-      cat('#SBATCH --output=/scratch/hadpb/slurm_output_orange/%j.out\n')
-      cat('#SBATCH --mem=10000\n')
+      cat('#SBATCH --output=/scratch/hadpb/slurm_output_1976_nowind/%j.out\n')
+      cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
       cat('#SBATCH --ntasks-per-core=2\n')
-      cat('#SBATCH --time=30\n')
+      cat('#SBATCH --time=20\n')
       count<-1
       while(step<=max.step && count<=num.simultanious) {
-         cat(sprintf("./make_year_plots_single_orange.R --date=%s\n",dates[step]))
+         cat(sprintf("./plot_frame_nowind_temperature.R --date=%s\n",dates[step]))
          count<-count+1
          step<-step+1
       }              
@@ -34,7 +33,6 @@ while(current.step<limit) {
       system('sbatch multistart.step.slm')
     }
     current.step<-current.step+n.new.jobs
-    Sys.sleep(5)
   }
   if(current.step<limit) Sys.sleep(50)
 }

@@ -1,0 +1,8 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --output=/scratch/hadpb/slurm_output/%j.out
+#SBATCH --mem=5000
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-core=2
+#SBATCH --time=5
+./make_year_plots_single_spice.R --date=2014-01-08:22:40

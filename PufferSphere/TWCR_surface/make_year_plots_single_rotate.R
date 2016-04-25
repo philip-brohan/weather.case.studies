@@ -12,13 +12,15 @@ library(parallel)
 library(getopt)
 
 opt = getopt(c(
-  'date',   'd', 2, "character"
+  'date',   'd', 2, "character",
+  'step',   's', 2, "integer"
 ));
 if ( is.null(opt$date) )   { stop("Date not specified") }
+if ( is.null(opt$step) )   { stop("Step not specified") }
 
 version<-'3.5.1'
 
-Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_fade_io/")
+Imagedir<-sprintf("/scratch/hadpb/images/TWCR_spherical_obliquity_rotate/")
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 
@@ -39,7 +41,7 @@ Options<-WeatherMap.set.option(Options,'show.precipitation',F)
 Options<-WeatherMap.set.option(Options,'temperature.range',25)
 Options<-WeatherMap.set.option(Options,'wind.palette',
                        diverge_hcl(7,c=c(150,0),l=c(25,30),power=1))
-Options<-WeatherMap.set.option(Options,'land.colour',rgb(100,100,100,255,
+Options<-WeatherMap.set.option(Options,'land.colour',rgb(125,125,125,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'sea.colour',rgb(200,200,200,255,
                                                        maxColorValue=255))
@@ -53,7 +55,15 @@ Options$ice.points<-100000
 Options$wind.vector.lwd<-2.5
 Options$wind.vector.move.scale<-Options$wind.vector.move.scale/3
 Options$wind.vector.density<-Options$wind.vector.density*0.5
-land<-WeatherMap.get.land(Options)
+
+set.pole<-function(step,Options) {
+  lon<-160+(step/10)
+  if(lon>360) lon<-lon%%360
+  lat<-45+sin(step/500)*44
+  Options<-WeatherMap.set.option(Options,'pole.lon',lon)
+  Options<-WeatherMap.set.option(Options,'pole.lat',lat)
+  return(Options)
+}
 
 make.streamlines<-function(date.string) {
 
@@ -67,7 +77,7 @@ make.streamlines<-function(date.string) {
 
 }
 
-plot.hour<-function(date.string,streamlines) {
+plot.hour<-function(date.string,step,streamlines) {
 
 
     image.name<-sprintf("%s.png",date.string)
@@ -75,6 +85,9 @@ plot.hour<-function(date.string,streamlines) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
+    Options<-set.pole(step,Options)
+    land<-WeatherMap.get.land(Options)
+    
      png(ifile.name,
              width=1050*WeatherMap.aspect(Options),
              height=1050,
@@ -92,4 +105,4 @@ plot.hour<-function(date.string,streamlines) {
 }
 
 s<-make.streamlines(opt$date)
-plot.hour(opt$date,s)
+plot.hour(opt$date,opt$step,s)

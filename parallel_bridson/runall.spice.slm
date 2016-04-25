@@ -1,0 +1,11 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=50000
+#SBATCH --ntasks=10
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=150
+
+#sbatch -d afternotok:$SLURM_JOB_ID runall.spice.slm
+sbatch -d afterok:$SLURM_JOB_ID ffmpeg.spice.slm
+
+./make_year_plots_spice.R
