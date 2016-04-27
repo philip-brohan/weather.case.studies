@@ -14,7 +14,7 @@ conv.file<-function(i) {
   Image.file<-Glob[i]
   if(!file.exists(Image.file)) stop(sprintf("Missing file %s",
                                    Image.file))
-  nfname<-sprintf("%s/%04d.png",Tdir,i)
+  nfname<-sprintf("%s/%05d.png",Tdir,i)
   if(file.exists(nfname)) return()
   system(sprintf("convert -gamma 0.6 %s %s",Image.file,nfname))
   if(i<36) {
@@ -27,7 +27,7 @@ conv.file<-function(i) {
     }
 }
 
-mclapply(seq(1,length(Glob)),conv.file,mc.cores=6)
+mclapply(seq(1,length(Glob)),conv.file,mc.cores=8)
 
-system("ffmpeg -r 36 -pattern_type glob -i /Users/philip/LocalData/images/ffmpeg/\*.png -c:v libx264 -threads 5 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy /Users/philip/LocalData/images/TWCR_2014_full_year.mov")
+system("ffmpeg -r 36 -pattern_type glob -i /Users/philip/LocalData/images/ffmpeg/\\*.png -c:v libx264 -threads 8 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy /Users/philip/LocalData/images/TWCR_2014_full_year.mov")
 

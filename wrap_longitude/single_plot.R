@@ -2,17 +2,18 @@
 
 # Show weather and fog in Gil's scout reanalysis.
 # Spherical version with garish colours
+# Single field to test longitude wrapping
 
 library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(chron)
-#library(parallel)
+library(png)
 
 Year<-2014
 Month<-1
 Day<-1
 Hour<-0
-n.total<-20#365*24
+n.total<-0
 version<-'3.5.1'
 cores<-6
 
@@ -20,7 +21,7 @@ fog.threshold<-exp(1)
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-sprintf("%s/images/TWCR_%s_spherical/%04d",Sys.getenv('SCRATCH'),version,Year)
+Imagedir<-sprintf("%s/images/longitude_wrap",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -37,34 +38,33 @@ Options$vp.lon.max<-  180
 Options<-WeatherMap.set.option(Options,'jitter',FALSE)
 Options<-WeatherMap.set.option(Options,'wrap.spherical',T)
 Options<-WeatherMap.set.option(Options,'show.mslp',F)
-Options<-WeatherMap.set.option(Options,'show.ice',T)
+Options<-WeatherMap.set.option(Options,'show.ice',F)
 Options<-WeatherMap.set.option(Options,'show.obs',F)
 Options<-WeatherMap.set.option(Options,'show.fog',F)
-Options<-WeatherMap.set.option(Options,'show.precipitation',T)
+Options<-WeatherMap.set.option(Options,'show.precipitation',F)
 Options<-WeatherMap.set.option(Options,'temperature.range',25)
 Options<-WeatherMap.set.option(Options,'wind.palette',
                        diverge_hcl(7,c=c(150,0),l=c(25,30),power=1))
-Options<-WeatherMap.set.option(Options,'obs.size',1.5)
-Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
-                                                       maxColorValue=255))
+#Options<-WeatherMap.set.option(Options,'pole.lon',160)
+#Options<-WeatherMap.set.option(Options,'pole.lat',35)
+Options<-WeatherMap.set.option(Options,'background.resolution','high')
 
 aspect<-2
 
 Options$ice.points<-100000
-Options$wind.vector.lwd<-2.5
+Options$wind.vector.lwd<-2
 Options$wind.vector.move.scale<-Options$wind.vector.move.scale/3
 Options$wind.vector.density<-Options$wind.vector.density*0.5
+Options$wind.vector.scale<-Options$wind.vector.scale*1
 land<-WeatherMap.get.land(Options)
+
+Options<-WeatherMap.set.option(Options,'cores',4)
 
 make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
 
 
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
                            Imagedir,year,month,day,hour)
-    if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
-       load(sf.name)
-       return(s)
-    }
     print(sprintf("%04d-%02d-%02d:%02d - %s",year,month,day,hour,
                    Sys.time()))
 
@@ -86,16 +86,6 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     image.name<-sprintf("%04d-%02d-%02d:%02d.png",year,month,day,hour)
 
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-    if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
-
-    prmsl<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=version)
-    prmsl.normal<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='3.4.1',
-                                             type='normal')
-    prate<-NULL
-    if(Options$show.precipitation) {
-       prate<-TWCR.get.slice.at.hour('prate',year,month,day,hour,version=version)
-     }
-    icec<-TWCR.get.slice.at.hour('icec',year,month,day,hour,version=version)
 
      png(ifile.name,
              width=1050*WeatherMap.aspect(Options),
@@ -104,18 +94,16 @@ plot.hour<-function(year,month,day,hour,streamlines) {
              pointsize=24,
              type='cairo')
     Options$label<-sprintf("")
-       WeatherMap.draw(Options=Options,uwnd=NULL,icec=icec,
-                          vwnd=NULL,precip=prate,mslp=prmsl,
+       WeatherMap.draw(Options=Options,uwnd=NULL,icec=NULL,
+                          vwnd=NULL,precip=NULL,mslp=NULL,
                           t.actual=NULL,t.normal=NULL,land=land,
                           fog=NULL,obs=NULL,streamlines=streamlines)
     dev.off()
 }
 
-Rprof('myp.profile')
-s<-NULL
-jobs<-list()
-for(n.count in seq(0,n.total)) {
 
+n.count<-0
+s<-NULL
     n.date<-c.date+n.count/24
     year<-as.numeric(as.character(years(n.date)))
     month<-months(n.date)
@@ -124,15 +112,21 @@ for(n.count in seq(0,n.total)) {
 
     # serial component - streamlines evolve from hour to hour
     s<-make.streamlines(year,month,day,hour,streamlines=s)
+    # set the status to make all the lines visible
+    s$status<-s$status*0+4
 
     image.name<-sprintf("%04d-%02d-%02d:%02d.png",year,month,day,hour)
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-    if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
 
-    # Each plot in a seperate parallel process
-    #mcparallel(plot.hour(year,month,day,hour,s))
-    #if(n.count%%cores==0) mccollect(wait=TRUE)
-
-}
-#mccollect()
-Rprof(NULL)
+    plot.hour(year,month,day,hour,s)
+ 
+    # re-arrange the output file - sides-to-middle - to show boundary conditions
+    f<-readPNG(ifile.name)
+    d<-dim(f)
+    for(chan in seq(1,d[3])) {
+       for(row in seq(1,d[1])) {      
+          f[row,,chan]<-c(f[row,(d[2]/2+1):d[2],chan],f[row,1:(d[2]/2),chan])
+       }
+    }
+    writePNG(f,'stm.png')
+    
