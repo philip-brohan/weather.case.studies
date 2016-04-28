@@ -59,7 +59,7 @@ Options$wind.vector.density<-Options$wind.vector.density*0.5
 set.pole<-function(step,Options) {
   lon<-160+(step/10)
   if(lon>360) lon<-lon%%360
-  lat<-45+sin(step/500)*44
+  lat<-90+sin(step/500)*89
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   return(Options)

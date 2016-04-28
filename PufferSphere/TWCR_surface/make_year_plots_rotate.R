@@ -12,7 +12,7 @@ Year<-2014
 Month<-1
 Day<-2
 Hour<-0
-n.total<-365*24*3
+n.total<-365*24*2
 version<-'3.5.1'
 
 fog.threshold<-exp(1)
@@ -63,7 +63,7 @@ Options$cores<-10
 set.pole<-function(step,Options) {
   lon<-160+(step/10)
   if(lon>360) lon<-lon%%360
-  lat<-45+sin(step/500)*44
+  lat<-90+sin(step/500)*89
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   return(Options)
@@ -113,12 +113,12 @@ s<-NULL
 jobs<-list()
 for(n.count in seq(0,n.total)) {
 
-    n.date<-c.date+n.count/(24*3)
+    n.date<-c.date+n.count/(24*2)
     year<-as.numeric(as.character(years(n.date)))
     if(year>2014) next
     month<-months(n.date)
     day<-days(n.date)
-    hour<-((n.count+Hour)%%(24*3))/3
+    hour<-((n.count+Hour)%%(24*2))/2
 
     # serial component - streamlines evolve from hour to hour
     s<-make.streamlines(year,month,day,hour,n.count,streamlines=s)

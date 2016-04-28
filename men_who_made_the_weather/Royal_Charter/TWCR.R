@@ -8,9 +8,9 @@ library(parallel)
 
 Year<-1859
 Month<-10
-Day<-24
-Hour<-0
-n.total<-24*6*4 # Total number of timesteps to be rendered
+Day<-26
+Hour<-12
+n.total<-0#24*6*4 # Total number of timesteps to be rendered
 version<-'3.5.1'
 fog.threshold<-exp(1)
 
