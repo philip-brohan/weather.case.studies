@@ -58,7 +58,7 @@ Options$wind.vector.density<-Options$wind.vector.density*0.5
 Options$wind.vector.scale<-Options$wind.vector.scale*1
 land<-WeatherMap.get.land(Options)
 
-Options<-WeatherMap.set.option(Options,'cores',4)
+Options<-WeatherMap.set.option(Options,'cores',1)
 
 make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
 
