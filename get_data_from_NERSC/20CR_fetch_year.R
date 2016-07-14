@@ -163,17 +163,17 @@ if(opt$sds==TRUE) {
 # observations 
 get.observations<-function(month) {
    remote.dir<-sprintf("pbrohan@dtn02.nersc.gov:/project/projectdirs/m958/netCDF.data/20CR_v%s/",opt$version)
-   local.obs.dir<-sprintf("%s/observations/",local.dir,opt$year)
+   local.obs.dir<-sprintf("%s/observations",local.dir)
    if(!file.exists(dirname(local.obs.dir))) dir.create(dirname(local.obs.dir),recursive=TRUE)
-   cmd<-sprintf("rsync -avz %s/observations/%04d %s/",remote.dir,opt$year,local.obs.dir)
+   cmd<-sprintf("rsync -avzL %s/observations/%04d %s/",remote.dir,opt$year,local.obs.dir)
    system(cmd)
   # check one arbitrary file
-   if(!file.exists(sprintf("%s/prepbufrobs_assim_%04d060500.txt",local.obs.dir,opt$year))) {
+   if(!file.exists(sprintf("%s/%04d/prepbufrobs_assim_%04d060500.txt",local.obs.dir,opt$year,opt$year))) {
      return(sprintf("Failed: %s",cmd))
    }
    return(TRUE)
 }
-if(opt$ensemble==TRUE) {
+if(opt$observations==TRUE) {
    get.result<-get.observations()
        w<-which(get.result!=TRUE)
     if(length(w)>0) {
