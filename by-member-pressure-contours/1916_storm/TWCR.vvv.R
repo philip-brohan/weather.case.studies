@@ -104,7 +104,7 @@ plot.hour<-function(year,month,day,hour) {
     #if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
      png(ifile.name,
-             width=1080*aspect,
+             width=1080*aspect*2,
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,

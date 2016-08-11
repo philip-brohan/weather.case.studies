@@ -1,12 +1,15 @@
 #!/bin/ksh -l
 #SBATCH --qos=normal
 #SBATCH --mem=100000
-#SBATCH --ntasks=2
+#SBATCH --ntasks=16
 #SBATCH --ntasks-per-core=1
-#SBATCH --time=350
-#SBATCH --gres=tmp:50000
+#SBATCH --time=50
 #SBATCH --kill-on-invalid-dep=yes
 
-find /scratch/images/1976-summer-nowind-at/*.png -type f -empty -delete
+cd /scratch/hadpb/images
+rm 1976-summer-precis_v_20CR.mp4
+# Get rid of empty images - they make ffmpeg stop processing
+#  These usually come from disc problems in the creation step.
+find 1976-summer-precis_v_20CR/*.png -type f -empty -delete
 
-./run_ffmpeg.spice.perl
+ffmpeg -r 48 -pattern_type glob -i 1976-summer-precis_v_20CR/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy 1976-summer-precis_v_20CR.mp4

@@ -8,8 +8,9 @@ library(parallel)
 
 opt = getopt(matrix(c(
   'year',         'y', 2, 'integer',
-  'version',      'v', 0, 'character',
+  'version',      'v', 2, 'character',
   'extended',     'x', 0, "logical",
+  'first.guess',  'f', 0, "logical",
   'ensemble',     'e', 0, "logical",
   'observations', 'o', 0, "logical",
   'normals',      'n', 0, "logical",
@@ -21,6 +22,7 @@ if(is.null(opt$version))      opt$version='3.5.1'
 if(opt$version=='2c') opt$version='3.5.1'
 if(opt$version=='2') opt$version='3.2.1'
 if(is.null(opt$extended))     opt$extended=FALSE
+if(is.null(opt$first.guess))  opt$first.guess=FALSE
 if(is.null(opt$ensemble))     opt$ensemble=FALSE
 if(is.null(opt$observations)) opt$observations=FALSE
 if(is.null(opt$normals))      opt$normals=FALSE
@@ -71,7 +73,10 @@ if(opt$extended==TRUE) {
 
 # Full ensemble
 get.members<-function(var) {
- remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis_version2c_ensemble/"
+ remote.dir<-sprintf("pbrohan@dtn02.nersc.gov:/project/projectdirs/m958/netCDF.data/20CR_v%s/",opt$version)
+ if(opt$version=='3.5.1') {
+    remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis_version2c_ensemble/"
+ }
  if(opt$version=='3.2.1') {
     remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis__ensemble/"
  }  
@@ -79,26 +84,31 @@ get.members<-function(var) {
  if(!file.exists(dirname(local.file))) dir.create(dirname(local.file),recursive=TRUE)
  if(!file.exists(local.file)) {
     cmd<-''
-    if(var=='prmsl') {
-       cmd<-sprintf("scp %s/analysis/%s/%s_%04d.nc %s",remote.dir,
-                    var,var,opt$year,local.file)
+    if(opt$version=='3.5.1' || opt$version=='3.2.1') {
+        if(var=='prmsl') {
+           cmd<-sprintf("scp %s/analysis/%s/%s_%04d.nc %s",remote.dir,
+                        var,var,opt$year,local.file)
+         }
+        if(var=='air.2m') {
+           cmd<-sprintf("scp %s/analysis/%s/%s_%04d.nc %s",remote.dir,
+                        't9950','t9950',opt$year,local.file)
+         }
+        if(var=='uwnd.10m') {
+           cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
+                        'u10m','u10m',opt$year,local.file)
+         }
+        if(var=='vwnd.10m') {
+           cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
+                        'v10m','v10m',opt$year,local.file)
+         }     
+        if(var=='prate') {
+           cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
+                        var,var,opt$year,local.file)
      }
-    if(var=='air.2m') {
-       cmd<-sprintf("scp %s/analysis/%s/%s_%04d.nc %s",remote.dir,
-                    't9950','t9950',opt$year,local.file)
-     }
-    if(var=='uwnd.10m') {
-       cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
-                    'u10m','u10m',opt$year,local.file)
-     }
-    if(var=='vwnd.10m') {
-       cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
-                    'v10m','v10m',opt$year,local.file)
-     }     
-    if(var=='prate') {
-       cmd<-sprintf("scp %s/first_guess/%s/%s_%04d.nc %s",remote.dir,
-                    var,var,opt$year,local.file)
-     }     
+    } else {
+      cmd<-sprintf("scp %s/ensembles/hourly/%s/%s.%04d.nc %s",remote.dir,
+                        var,var,opt$year,local.file)
+    }
     system(cmd)
     if(!file.exists(local.file)) return(sprintf("Failed: %s",cmd))
   }
@@ -159,6 +169,37 @@ if(opt$sds==TRUE) {
       stop("sds download failed")
     }
 }
+
+# First Guess
+get.first.guess<-function(var) {
+ remote.dir<-sprintf("pbrohan@dtn02.nersc.gov:/project/projectdirs/m958/netCDF.data/20CR_v%s/",opt$version)
+ local.file<-sprintf("%s/first.guess.hourly/%s/%s.%04d.nc",local.dir,var,var,opt$year)
+ if(!file.exists(dirname(local.file))) dir.create(dirname(local.file),recursive=TRUE)
+ if(!file.exists(local.file)) {
+    cmd<-sprintf("scp %s/first.guess.hourly/%s/%s.%04d.nc %s",remote.dir,
+                 var,var,opt$year,local.file)
+    system(cmd)
+    if(!file.exists(local.file)) return(sprintf("Failed: %s",cmd))
+  }
+ local.file<-sprintf("%s/first.guess.hourly/%s/%s.%04d.spread.nc",local.dir,var,var,opt$year)
+ if(!file.exists(local.file)) {
+    cmd<-sprintf("scp %s/first.guess.hourly/%s/%s.%04d.spread.nc %s",remote.dir,
+                 var,var,opt$year,local.file)
+    system(cmd)
+    if(!file.exists(local.file)) return(sprintf("Failed: %s",cmd))
+  }
+  return(TRUE)
+}
+if(opt$first.guess==TRUE) {
+    vars<-c('air.2m','prmsl','uwnd.10m','vwnd.10m')
+    get.result<-mclapply(vars,get.first.guess,mc.cores=4)
+    w<-which(get.result!=TRUE)
+    if(length(w)>0) {
+      for(i in w) print(get.result[[i]])
+      stop("First guess download failed")
+    }
+}
+
 
 # observations 
 get.observations<-function(month) {
