@@ -1,23 +1,22 @@
 #!/usr/common/graphics/R/R-3.1.0/bin/R --no-save
 
-# 2013 St Jude's day storm
+# Weather of Jutland
 
-library(GSDF.MERRA)
 library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(parallel)
 
-Year<-2013
-Month<-10
-Day<-26
+Year<-1916
+Month<-5
+Day<-30
 Hour<-0
 n.total<-24*6*4 # Total number of timesteps to be rendered
 version<-'3.5.1'
 fog.threshold<-exp(1)
 
-GSDF.cache.dir<-"./GSDF.cache"
+GSDF.cache.dir<-"/scratch/hadpb/GSDF.cache"
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-"./images/2013_st_jude_merra"
+Imagedir<-"/scratch/hadpb/images/1916_jutland"
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -27,7 +26,8 @@ c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
 Options<-WeatherMap.set.option(NULL)
 Options<-WeatherMap.set.option(Options,'show.mslp',T)
 Options<-WeatherMap.set.option(Options,'show.ice',F)
-Options<-WeatherMap.set.option(Options,'show.obs',F)
+Options<-WeatherMap.set.option(Options,'show.obs',T)
+Options<-WeatherMap.set.option(Options,'obs.size',0.2)
 Options<-WeatherMap.set.option(Options,'show.fog',F)
 Options<-WeatherMap.set.option(Options,'show.precipitation',F)
 Options<-WeatherMap.set.option(Options,'temperature.range',6)
@@ -44,7 +44,7 @@ Options<-WeatherMap.set.option(Options,'pole.lat',36)
 land<-WeatherMap.get.land(Options)
 Options$wind.vector.lwd<-3
 Options$wind.vector.scale<-0.5
-Options$wind.vector.density<-1
+Options$wind.vector.density<-1.5
 Options$wind.vector.move.scale<-10
 
 Options$mslp.lwd<-3
@@ -52,12 +52,12 @@ Options$mslp.base=0                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=250                       # Smaller -more contours
 Options$mslp.tpscale=3500                    # Smaller -contours less transparent
-Options<-WeatherMap.set.option(Options,'cores',1)
-Options<-WeatherMap.set.option(Options,'bridson.subsample',1)
 
-get.member.at.hour<-function(variable,year,month,day,hour) {
+get.member.at.hour<-function(variable,year,month,day,hour,member) {
 
-       t<-MERRA.get.slice.at.hour(variable,year,month,day,hour)
+       t<-TWCR.get.members.slice.at.hour(variable,year,month,day,
+                                  hour,version=version)
+       t<-GSDF.select.from.1d(t,'ensemble',member)
        gc()
        return(t)
   }
@@ -68,11 +68,7 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL,count) {
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d:%02d.rd",
                            Imagedir,year,month,day,as.integer(hour),
                                                as.integer(hour%%1*60))
-<<<<<<< HEAD
-    if(count>0 && file.exists(sf.name) && file.info(sf.name)$size>300000) {
-=======
-    if(file.exists(sf.name) && file.info(sf.name)$size>300000) {
->>>>>>> 2edc5cb20cdf68cfbf1136d157d163bb14aaac01
+    if(count>0 && file.exists(sf.name) && file.info(sf.name)$size>500000) {
        load(sf.name)
        return(s)
     }
@@ -80,9 +76,9 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL,count) {
                    as.integer(hour%%1*60),
                    Sys.time()))
 
-    uwnd<-get.member.at.hour('U10M',year,month,day,hour)
-    vwnd<-get.member.at.hour('V10M',year,month,day,hour)
-    t.actual<-get.member.at.hour('T2M',year,month,day,hour)
+    uwnd<-get.member.at.hour('uwnd.10m',year,month,day,hour,member=1)
+    vwnd<-get.member.at.hour('vwnd.10m',year,month,day,hour,member=1)
+    t.actual<-get.member.at.hour('air.2m',year,month,day,hour,member=1)
     t.normal<-t.actual
     t.normal$data[]<-rep(283,length(t.normal$data))
     s<-WeatherMap.make.streamlines(streamlines,uwnd,vwnd,t.actual,t.normal,Options)
@@ -99,10 +95,13 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
-    prmsl<-get.member.at.hour('SLP',year,month,day,hour)
-    prmsl.n<-MERRA.get.slice.at.hour('SLP',year,month,day,hour,type='normal')
+    prmsl<-get.member.at.hour('prmsl',year,month,day,hour,member=1)
+    prmsl.n<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='3.4.1',type='normal')
     prmsl.n<-GSDF.regrid.2d(prmsl.n,prmsl)
     prmsl$data[]<-as.vector(prmsl$data)-as.vector(prmsl.n$data)
+    obs<-TWCR.get.obs(year,month,day,hour,version=version)
+    w<-which(obs$Longitude>180)
+    obs$Longitude[w]<-obs$Longitude[w]-360
 
      png(ifile.name,
              width=1080*WeatherMap.aspect(Options),
@@ -111,30 +110,30 @@ plot.hour<-function(year,month,day,hour,streamlines) {
              pointsize=24,
              type='cairo')
     Options$label<-sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
-    tryCatch({
+
+    
        WeatherMap.draw(Options=Options,uwnd=NULL,icec=NULL,
                           vwnd=NULL,precip=NULL,mslp=prmsl,
                           t.actual=NULL,t.normal=NULL,land=land,
-                          fog=NULL,obs=NULL,streamlines=streamlines)
-              },
-              error=function(cond) {
-                message(cond)
-                # Choose a return value in case of error
-                return(NA)
-              },
-              warning=function(cond) {
-                message(cond)
-                # Choose a return value in case of warning
-                return(NULL)
-             },
-             finally={}
-    )    
+                          fog=NULL,obs=obs,streamlines=streamlines)
+    pushViewport(dataViewport(c(Options$lon.min,Options$lon.max),
+                              c(Options$lat.min,Options$lat.max),
+                                extension=0))
+    Options<-WeatherMap.set.option(Options,'obs.size',0.2)
+    Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,0,0,255,
+						   maxColorValue=255))
+    w<-which(obs$NCEP.Type==194)
+    if(length(w)>0) WeatherMap.draw.obs(obs[w,],Options)
+    Options<-WeatherMap.set.option(Options,'obs.size',0.2)
+    Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
+						   maxColorValue=255))
+    upViewport()
 
     dev.off()
 }
 
 s<-NULL
-for(n.count in seq(1,n.total)) {
+for(n.count in seq(0,n.total)) {
 
     n.date<-c.date+n.count/(24*6) # 10-minute timesteps
     year<-as.numeric(as.character(years(n.date)))
@@ -158,7 +157,6 @@ for(n.count in seq(1,n.total)) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
     # Each plot in a seperate parallel process
-    #plot.hour(year,month,day,hour,s)
     mcparallel(plot.hour(year,month,day,hour,s))
     if(n.count%%30==0) mccollect(wait=TRUE)
 
