@@ -51,10 +51,11 @@ Options<-WeatherMap.set.option(Options,'background.resolution','high')
 aspect<-2
 
 Options$ice.points<-100000
-Options$wind.vector.lwd<-4
+Options$wind.vector.lwd<-2
 Options$wind.vector.move.scale<-Options$wind.vector.move.scale/3
 Options$wind.vector.density<-Options$wind.vector.density*0.5
-Options$wind.vector.scale<-Options$wind.vector.scale*1
+Options$wind.vector.scale<-Options$wind.vector.scale*2
+Options$wind.vector.points<-7
 land<-WeatherMap.get.land(Options)
 
 Options<-WeatherMap.set.option(Options,'cores',1)
@@ -101,12 +102,9 @@ s<-NULL
  
     # Twice round to include the downstream points
     s<-NULL
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)    
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)    
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
-    s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)    
+    for(i in seq(1,25)) {
+       s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
+    }
     s$status<-s$status*0+4
     ifile2.name<-sprintf("%s/%s",Imagedir,'pass2.png')
     plot.hour(year,month,day,hour,s,ifile2.name)
