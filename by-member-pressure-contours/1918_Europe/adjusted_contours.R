@@ -1,6 +1,6 @@
 #!/usr/common/graphics/R/R-3.1.0/bin/R --no-save
 
-# Tambora period
+# Modern period
 
 library(GSDF.TWCR)
 library(GSDF.WeatherMap)
@@ -8,8 +8,8 @@ library(parallel)
 library(lubridate)
 
 Year<-1918
-Month<-02
-Day<-28
+Month<-1
+Day<-1
 Hour<-0
 d.total<-30 # Number of days to be rendered
 version<-'3.5.1'
@@ -17,7 +17,7 @@ members<-seq(1,56)
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-sprintf("%s/images/1918-europe-assimilation",Sys.getenv('SCRATCH'),version)
+Imagedir<-sprintf("%s/images/1918-assimilation-adjusted",Sys.getenv('SCRATCH'),version)
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -39,7 +39,7 @@ Options<-WeatherMap.set.option(Options,'lat.max',range)
 Options<-WeatherMap.set.option(Options,'lon.min',range*aspect*-1)
 Options<-WeatherMap.set.option(Options,'lon.max',range*aspect)
 Options<-WeatherMap.set.option(Options,'pole.lon',185)
-Options<-WeatherMap.set.option(Options,'pole.lat',35)
+Options<-WeatherMap.set.option(Options,'pole.lat',15)
 
 Options$obs.size<- 0.75
 
@@ -47,10 +47,13 @@ land<-WeatherMap.get.land(Options)
 
 Options$mslp.lwd<-1
 Options$mslp.base=0                         # Base value for anomalies
-Options$mslp.range=50000                    # Anomaly for max contour
-Options$mslp.crange=3000                    # Anomaly for max contour colour
-Options$mslp.step=1000                      # Smaller -more contours
-Options$mslp.tpscale=350                    # Smaller -contours less transparent
+Options$mslp.range=50000              # Anomaly for max contour
+Options$mslp.crange=3000              # Anomaly for max contour colour
+Options$mslp.step=1000                # Smaller -more contours
+Options$mslp.tpscale=350              # Smaller -contours less transparent
+# Overrides mslp options options
+contour.levels<-seq(-300,300,30)
+contour.levels<-abs(contour.levels)**1.5*sign(contour.levels)
 
 # Estimate a first-guess ensemble by scaling the analysis
 #  ensemble to have the first-guess mean and spread
@@ -89,15 +92,6 @@ get.forecast.step.end<-function(year,month,day,hour) {
   }
   e<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
                                     hour,version=version)
-  # First guess data out by 6 hours?
-  #hour<-hour-hour-6
-  #if(hour<0) {
-  #  ymd<-ymd(sprintf("%04d-%02d-%02d",year,month,day))-days(1)
-  #  year<-year(ymd)
-  #  month<-month(ymd)
-  #  day<-day(ymd)
-  #  hour<-hour+24
-  #}
   fg.m<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
                                 type='fg.mean',version=version)
   fg.s<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
@@ -125,33 +119,30 @@ get.assimilation.step.interpolated<-function(year,month,day,hour,stage) {
   return(e1)
 }
  
-obs.get.colour<-function(slp) {
-   value<-max(-0.999,min(0.999,(slp-Options$mslp.base)/
-              Options$mslp.crange))
-   value<-value/2+0.5
+obs.get.colour<-function(mp) {
+   value<-max(0.001,min(0.999,mp/length(contour.levels)))
    return(Options$wind.palette[ceiling(value*length(Options$wind.palette))])
 }
 
 Draw.obs.pressure<-function(obs,Options) {
 
-  min.pressure<-Options$mslp.base-Options$mslp.crange
+  min.pressure<-min(contour.levels)
   w<-which(obs$SLP<min.pressure)
   if(length(w)>0) {
-    Options$obs.colour<-obs.get.colour(min.pressure)
+    Options$obs.colour<-obs.get.colour(0)
     WeatherMap.draw.obs(obs[w,],Options)
   }
-  for(mp in seq(Options$mslp.base-Options$mslp.crange+Options$mslp.step,
-                Options$mslp.base+Options$mslp.crange,Options$mslp.step)) {
-    w<-which(obs$SLP<mp & obs$SLP>=mp-Options$mslp.step)
+  for(mp in seq(2,length(contour.levels))) {
+    w<-which(obs$SLP<contour.levels[mp] & obs$SLP>=contour.levels[mp-1])
     if(length(w)>0) {
-      Options$obs.colour<-obs.get.colour(mp-Options$mslp.step/2)
+      Options$obs.colour<-obs.get.colour(mp-1)
       WeatherMap.draw.obs(obs[w,],Options)
     }
  }
   max.pressure<-Options$mslp.base+Options$mslp.crange
   w<-which(obs$SLP>max.pressure)
   if(length(w)>0) {
-    Options$obs.colour<-obs.get.colour(max.pressure)
+    Options$obs.colour<-obs.get.colour(length(contour.levels))
     WeatherMap.draw.obs(obs[w,],Options)
   }
 }
@@ -174,9 +165,9 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0,1)) {
       M<-GSDF.regrid.2d(M,M2)
     }
     z<-matrix(data=M$data,nrow=length(longs),ncol=length(lats))
-    contour.levels<-seq(Options$mslp.base-Options$mslp.range,
-                        Options$mslp.base+Options$mslp.range,
-                        Options$mslp.step)
+    #contour.levels<-seq(Options$mslp.base-Options$mslp.range,
+    #                    Options$mslp.base+Options$mslp.range,
+    #                    Options$mslp.step)
     lines<-contourLines(longs,lats,z,
                          levels=contour.levels)
     if(!is.na(lines) && length(lines)>0) {
@@ -255,7 +246,7 @@ plot.assimilation.stage<-function(year,month,day,hour,stage) {
     image.name<-sprintf("%04d-%02d-%02d:%02d:%02d.%02d.png",year,month,day,as.integer(hour),
                                                          as.integer(hour%%1*60),as.integer(stage*100)+1)
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-    if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
+    #if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
      png(ifile.name,
              width=1080*WeatherMap.aspect(Options),
@@ -277,10 +268,6 @@ plot.assimilation.stage<-function(year,month,day,hour,stage) {
                                   hour,stage)
       m<-GSDF.select.from.1d(e,'ensemble',1)
       prmsl.normal<-GSDF.regrid.2d(prmsl.normal,m)
-      #obs<-TWCR.get.obs(year,month,day,hour,version=version)
-      #w<-which(obs$Longitude>180)
-      #obs$Longitude[w]<-obs$Longitude[w]-360
-      #WeatherMap.draw.obs(obs,Options)
       obs<-TWCR.get.obs(year,month,day,hour,version=version,range=0.15)
       w<-which(obs$Longitude>180)
       obs$Longitude[w]<-obs$Longitude[w]-360
@@ -312,6 +299,7 @@ for(day.count in seq(0,d.total)) {
       for(stage in seq(0.05,0.95,0.1)) {
         mcparallel(plot.assimilation.stage(year,month,day,hour,stage))
         #plot.assimilation.stage(year,month,day,hour,stage)
+        #q('no')
       }
       if(hour==6 || hour==18) mccollect(wait=TRUE)
     }

@@ -1,0 +1,16 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=200000
+#SBATCH --ntasks=24
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=100
+
+R --no-save < ./adjusted_contours.R
+
+cd /scratch/hadpb/images
+rm 1998-assimilation-adjusted.mp4
+# Get rid of empty images - they make ffmpeg stop processing
+#  These usually come from disc problems in the creation step.
+find 1998-assimilation-adjusted/*.png -type f -empty -delete
+
+ffmpeg -r 24 -pattern_type glob -i 1998-assimilation-adjusted/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy 1998-assimilation-adjusted.mp4

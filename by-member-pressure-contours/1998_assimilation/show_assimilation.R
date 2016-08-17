@@ -1,15 +1,15 @@
 #!/usr/common/graphics/R/R-3.1.0/bin/R --no-save
 
-# Tambora period
+# Modern period
 
 library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(parallel)
 library(lubridate)
 
-Year<-1918
-Month<-02
-Day<-28
+Year<-1998
+Month<-1
+Day<-1
 Hour<-0
 d.total<-30 # Number of days to be rendered
 version<-'3.5.1'
@@ -17,7 +17,7 @@ members<-seq(1,56)
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-sprintf("%s/images/1918-europe-assimilation",Sys.getenv('SCRATCH'),version)
+Imagedir<-sprintf("%s/images/1998-assimilation",Sys.getenv('SCRATCH'),version)
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -39,9 +39,9 @@ Options<-WeatherMap.set.option(Options,'lat.max',range)
 Options<-WeatherMap.set.option(Options,'lon.min',range*aspect*-1)
 Options<-WeatherMap.set.option(Options,'lon.max',range*aspect)
 Options<-WeatherMap.set.option(Options,'pole.lon',185)
-Options<-WeatherMap.set.option(Options,'pole.lat',35)
+Options<-WeatherMap.set.option(Options,'pole.lat',15)
 
-Options$obs.size<- 0.75
+Options$obs.size<- 0.25
 
 land<-WeatherMap.get.land(Options)
 
@@ -89,15 +89,6 @@ get.forecast.step.end<-function(year,month,day,hour) {
   }
   e<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
                                     hour,version=version)
-  # First guess data out by 6 hours?
-  #hour<-hour-hour-6
-  #if(hour<0) {
-  #  ymd<-ymd(sprintf("%04d-%02d-%02d",year,month,day))-days(1)
-  #  year<-year(ymd)
-  #  month<-month(ymd)
-  #  day<-day(ymd)
-  #  hour<-hour+24
-  #}
   fg.m<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
                                 type='fg.mean',version=version)
   fg.s<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
@@ -277,10 +268,6 @@ plot.assimilation.stage<-function(year,month,day,hour,stage) {
                                   hour,stage)
       m<-GSDF.select.from.1d(e,'ensemble',1)
       prmsl.normal<-GSDF.regrid.2d(prmsl.normal,m)
-      #obs<-TWCR.get.obs(year,month,day,hour,version=version)
-      #w<-which(obs$Longitude>180)
-      #obs$Longitude[w]<-obs$Longitude[w]-360
-      #WeatherMap.draw.obs(obs,Options)
       obs<-TWCR.get.obs(year,month,day,hour,version=version,range=0.15)
       w<-which(obs$Longitude>180)
       obs$Longitude[w]<-obs$Longitude[w]-360
