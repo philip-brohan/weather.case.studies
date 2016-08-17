@@ -15,7 +15,6 @@ Day<-1
 Hour<-0
 n.total<-0
 version<-'3.5.1'
-cores<-6
 
 fog.threshold<-exp(1)
 
@@ -73,7 +72,9 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
     t.actual<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,version=version)
     t.normal<-t.actual
     t.normal$data[]<-rep(286,length(t.normal$data))
-    s<-WeatherMap.make.streamlines(streamlines,uwnd,vwnd,t.actual,t.normal,Options)
+    for(i in seq(1,3)) {
+       s<-WeatherMap.make.streamlines(streamlines,uwnd,vwnd,t.actual,t.normal,Options)
+    }
     save(year,month,day,hour,s,file=sf.name)
     gc(verbose=FALSE)
     return(s)

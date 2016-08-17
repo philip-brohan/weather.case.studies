@@ -15,9 +15,9 @@ n.total<-24*6*4 # Total number of timesteps to be rendered
 version<-'3.5.1'
 fog.threshold<-exp(1)
 
-GSDF.cache.dir<-"/scratch/hadpb/GSDF.cache"
+GSDF.cache.dir<-"./GSDF.cache"
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-Imagedir<-"/scratch/hadpb/images/2013_st_jude_merra"
+Imagedir<-"./images/2013_st_jude_merra"
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
@@ -44,7 +44,7 @@ Options<-WeatherMap.set.option(Options,'pole.lat',36)
 land<-WeatherMap.get.land(Options)
 Options$wind.vector.lwd<-3
 Options$wind.vector.scale<-0.5
-Options$wind.vector.density<-1.5
+Options$wind.vector.density<-1
 Options$wind.vector.move.scale<-10
 
 Options$mslp.lwd<-3
@@ -52,6 +52,8 @@ Options$mslp.base=0                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=250                       # Smaller -more contours
 Options$mslp.tpscale=3500                    # Smaller -contours less transparent
+Options<-WeatherMap.set.option(Options,'cores',1)
+Options<-WeatherMap.set.option(Options,'bridson.subsample',1)
 
 get.member.at.hour<-function(variable,year,month,day,hour) {
 
@@ -66,7 +68,11 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL,count) {
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d:%02d.rd",
                            Imagedir,year,month,day,as.integer(hour),
                                                as.integer(hour%%1*60))
+<<<<<<< HEAD
+    if(count>0 && file.exists(sf.name) && file.info(sf.name)$size>300000) {
+=======
     if(file.exists(sf.name) && file.info(sf.name)$size>300000) {
+>>>>>>> 2edc5cb20cdf68cfbf1136d157d163bb14aaac01
        load(sf.name)
        return(s)
     }
@@ -152,8 +158,9 @@ for(n.count in seq(1,n.total)) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
     # Each plot in a seperate parallel process
+    #plot.hour(year,month,day,hour,s)
     mcparallel(plot.hour(year,month,day,hour,s))
-    if(n.count%%6==0) mccollect(wait=TRUE)
+    if(n.count%%30==0) mccollect(wait=TRUE)
 
 }
 mccollect()
