@@ -70,10 +70,11 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
   lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
   longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
     # Need particular data format for contourLines
-  if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > 182 ) {
+  maxl<-Options$vp.lon.max+2
+  if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > maxl ) {
     if(lats[2]<lats[1]) lats<-rev(lats)
     if(longs[2]<longs[1]) longs<-rev(longs)
-    longs[longs>182]<-longs[longs>182]-364
+    longs[longs>maxl]<-longs[longs>maxl]-(maxl*2)
     longs<-sort(longs)
     M2<-M
     M2$dimensions[[GSDF.find.dimension(M,'lat')]]$values<-lats
@@ -120,8 +121,8 @@ plot.hour<-function(year,month,day,hour,step) {
     land<-WeatherMap.get.land(Options)
 
      png(ifile.name,
-             width=1050*WeatherMap.aspect(Options),
-             height=1050,
+             width=2160,
+             height=1080,
              bg=Options$sea.colour,
              pointsize=24,
              type='cairo')
@@ -149,7 +150,6 @@ n.count <-opt$step
 
     image.name<-sprintf("%04d-%02d-%02d:%02d.png",year,month,day,hour)
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-    if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
     plot.hour(year,month,day,hour,n.count)
 
     system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
