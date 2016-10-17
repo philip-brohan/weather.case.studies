@@ -50,12 +50,13 @@ Options$mslp.lwd=4
 Options$ice.points<-100000
 
 set.pole<-function(step,Options) {
-  lon<-160+(step/10)
+  if(step<=1000) return(Options)
+  lon<-160+((step-1000)/10)
   if(lon>360) lon<-lon%%360
-  lat<-55+sin(step/500)*20
+  lat<-35+sin((step-1000)/500)*20
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
-  min.lon<-step%%360-180
+  min.lon<-((step-1000)/5)%%360-180
   Options<-WeatherMap.set.option(Options,'lon.min',min.lon-10)
   Options<-WeatherMap.set.option(Options,'lon.max',min.lon+380)
   Options<-WeatherMap.set.option(Options,'vp.lon.min',min.lon   )

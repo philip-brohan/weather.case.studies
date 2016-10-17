@@ -69,7 +69,7 @@ set.pole<-function(step,Options) {
   if(step<=1000) return(Options)
   lon<-160+((step-1000)/10)
   if(lon>360) lon<-lon%%360
-  lat<-55+sin((step-1000)/500)*20
+  lat<-35+sin((step-1000)/500)*20
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   min.lon<-((step-1000)/5)%%360-180
