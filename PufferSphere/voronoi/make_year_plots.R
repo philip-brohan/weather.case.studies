@@ -8,16 +8,20 @@ library(GSDF.WeatherMap)
 library(grid)
 library(deldir)
 library(RColorBrewer)
+library(chron)
 
 Year<-2014
-Month<-1
-Day<-1
+Month<-3
+Day<-12
 Hour<-0
-n.total<-20#365*24
+n.total<-100#365*24
 version<-'3.5.1'
 cores<-6
 
-fog.threshold<-exp(1)
+c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
+          times=sprintf("%02d:00:00",Hour),
+          format=c(dates='y/m/d',times='h:m:s'))
+
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
 if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
@@ -36,7 +40,7 @@ Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
 Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.1)
 Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
-Options<-WeatherMap.set.option(Options,'wind.vector.density',0.5)
+Options<-WeatherMap.set.option(Options,'wind.vector.density',5)
 
 cols <- brewer.pal(9,"Set1")
 
@@ -58,7 +62,6 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
     t.normal<-t.actual
     t.normal$data[]<-rep(286,length(t.normal$data))
     s<-WeatherMap.make.streamlines(streamlines,uwnd,vwnd,t.actual,t.normal,Options)
-    s$colours<-seq_along(s$status)
     save(year,month,day,hour,s,file=sf.name)
     gc(verbose=FALSE)
     return(s)
@@ -73,7 +76,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
-    vtess<-deldir(s$x[,1],s$y[,1])str(s),z=s$colours)
+    vtess<-deldir(s$x[,1],s$y[,1],z=s$id)
     tl<-tile.list(vtess)
      png(ifile.name,
              width=1050*2,
@@ -93,7 +96,8 @@ plot.hour<-function(year,month,day,hour,streamlines) {
   pushViewport(dataViewport(c(lon.min,lon.max),c(lat.min,lat.max),
 		            extension=0,gp=base.gp))
     for(p in seq_along(tl)) {
-      col<-cols[p%%9+1]
+      col<-cols[tl[[p]]$z%%length(cols)+1]
+      
       gp<-gpar(col=col,fill=col)
       grid.polygon(x=unit(tl[[p]]$x,'native'),
                    y=unit(tl[[p]]$y,'native'),
@@ -103,9 +107,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     dev.off()
 }
 
-Rprof('myp.profile')
 s<-NULL
-jobs<-list()
 for(n.count in seq(0,n.total)) {
 
     n.date<-c.date+n.count/24
@@ -122,9 +124,9 @@ for(n.count in seq(0,n.total)) {
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
 
     # Each plot in a seperate parallel process
+    plot.hour(year,month,day,hour,s)
     #mcparallel(plot.hour(year,month,day,hour,s))
     #if(n.count%%cores==0) mccollect(wait=TRUE)
 
 }
 #mccollect()
-Rprof(NULL)

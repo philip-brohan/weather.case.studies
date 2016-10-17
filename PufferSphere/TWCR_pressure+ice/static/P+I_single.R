@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+#!/usr/bin/env Rscript
 
 # Pressure and ice only - for the PufferSphere
 # Run a single timestep only - designed to be run in parallel on SPICE.
