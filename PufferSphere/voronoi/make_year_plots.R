@@ -11,10 +11,10 @@ library(RColorBrewer)
 library(chron)
 
 Year<-2014
-Month<-3
-Day<-12
+Month<-1
+Day<-1
 Hour<-0
-n.total<-100#365*24
+n.total<-365*24
 version<-'3.5.1'
 cores<-6
 
@@ -40,7 +40,7 @@ Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
 Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.1)
 Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
-Options<-WeatherMap.set.option(Options,'wind.vector.density',5)
+Options<-WeatherMap.set.option(Options,'wind.vector.density',2)
 
 cols <- brewer.pal(9,"Set1")
 
@@ -68,6 +68,29 @@ make.streamlines<-function(year,month,day,hour,streamlines=NULL) {
 
 }
 
+# Move vertices of a new tile towards its origin point
+shrink.new.tiles<-function(vtess,s) {
+  weight<-c(.1,.4,.7)
+  for(st in c(1,2,3)) {
+    w<-which(s$status==st) # new points
+    w2<-s$id[w]            # persistent ids of new points
+    w3<-which(vtess$summary$z %in%w2) # tiles containing points with these ids
+    for(tile in w3) {
+      w4<-which(vtess$dirsgs$ind1==tile) # vertices of this tile
+      vtess$dirsgs$x1[w4]<-vtess$dirsgs$x1[w4]*weight[st]+
+                           vtess$summary$x[tile]*(1-weight[st])
+      vtess$dirsgs$x2[w4]<-vtess$dirsgs$x2[w4]*weight[st]+
+                           vtess$summary$x[tile]*(1-weight[st])
+      vtess$dirsgs$y1[w4]<-vtess$dirsgs$y1[w4]*weight[st]+
+                           vtess$summary$y[tile]*(1-weight[st])
+      vtess$dirsgs$y2[w4]<-vtess$dirsgs$y2[w4]*weight[st]+
+                           vtess$summary$y[tile]*(1-weight[st])
+    }
+  }
+  return(vtess)
+}
+  
+
 plot.hour<-function(year,month,day,hour,streamlines) {
 
 
@@ -77,6 +100,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
     vtess<-deldir(s$x[,1],s$y[,1],z=s$id)
+    vtess<-shrink.new.tiles(vtess,s)
     tl<-tile.list(vtess)
      png(ifile.name,
              width=1050*2,
@@ -124,9 +148,9 @@ for(n.count in seq(0,n.total)) {
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) next
 
     # Each plot in a seperate parallel process
-    plot.hour(year,month,day,hour,s)
-    #mcparallel(plot.hour(year,month,day,hour,s))
-    #if(n.count%%cores==0) mccollect(wait=TRUE)
+    #plot.hour(year,month,day,hour,s)
+    mcparallel(plot.hour(year,month,day,hour,s))
+    if(n.count%%cores==0) mccollect(wait=TRUE)
 
 }
-#mccollect()
+mccollect()
