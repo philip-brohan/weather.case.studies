@@ -6,6 +6,7 @@ library(GSDF)
 library(GSDF.WeatherMap)
 library(getopt)
 library(lubridate)
+library(RColorBrewer)
 
 opt = getopt(c(
   'year',   'd', 2, "integer",
@@ -15,7 +16,6 @@ opt = getopt(c(
 if ( is.null(opt$year) )   { stop("Year not specified") }
 if ( is.null(opt$month) )  { stop("Month not specified") }
 if ( is.null(opt$member) ) { opt$member<-1 }
-
 
 Imagedir<-sprintf("%s/images/HadCRUT4.red_blue",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
@@ -38,9 +38,11 @@ Options$obs.size<- 0.5
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',35)
 
+cols<-brewer.pal(11,"RdBu")
+
 set.pole<-function(step) {
   if(step<=1000) return(Options)
-  lon<-160+((step-1000)/10)
+  lon<-160+((step-1000)/10)+0.01
   if(lon>360) lon<-lon%%360
   lat<-35+sin((step-1000)/500)*20
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
@@ -68,17 +70,41 @@ HadCRUT.get.member.at.month<-function(year,month,member) {
 
 Draw.temperature<-function(temperature,Options,Trange=5) {
 
-  Options.local<-Options
-  Options.local$fog.min.transparency<-1.0
-  tplus<-temperature
-  tplus$data[]<-pmax(0,pmin(Trange,tplus$data))/Trange
-  Options.local$fog.colour<-c(1,0,0)
-  WeatherMap.draw.fog(tplus,Options.local)
-  tminus<-temperature
-  tminus$data[]<-tminus$data*-1
-  tminus$data[]<-pmax(0,pmin(Trange,tminus$data))/Trange
-  Options.local$fog.colour<-c(0,0,1)
-  WeatherMap.draw.fog(tminus,Options.local)
+  for(lon in seq_along(temperature$dimensions[[1]]$values)) {
+    for(lat in seq_along(temperature$dimensions[[2]]$values)) {
+      if(is.na(temperature$data[lon,lat,1])) next
+      col.i<-as.integer(length(cols)*min(0.99,max(0.01,(temperature$data[lon,lat,1]+Trange)/(Trange*2))))+1
+      gp<-gpar(col=cols[col.i],fill=cols[col.i],alpha=temperature$alpha[lon,lat,1])
+      x<-temperature$dimensions[[1]]$values[lon]
+      dx<-(temperature$dimensions[[1]]$values[2]-temperature$dimensions[[1]]$values[1])*0.6
+      if(x<Options$vp.lon.min-dx/2) x<-x+360
+      if(x>Options$vp.lon.max+dx/2) x<-x-360
+      y<-temperature$dimensions[[2]]$values[lat]
+      dy<-(temperature$dimensions[[2]]$values[2]-temperature$dimensions[[2]]$values[1])*0.6
+      p.x<-c(x-dx/2,x+dx/2,x+dx/2,x-dx/2)
+      p.y<-c(y-dy/2,y-dy/2,y+dy/2,y+dy/2)
+      p.r<-GSDF.ll.to.rg(p.y,p.x,Options$pole.lat,Options$pole.lon,polygon=TRUE)
+      if(max(p.r$lon)<Options$vp.lon.min) p.r$lon<-p.r$lon+360
+      if(min(p.r$lon)>Options$vp.lon.max) p.r$lon<-p.r$lon-360
+      grid.polygon(x=unit(p.r$lon,'native'),
+                   y=unit(p.r$lat,'native'),
+                   gp=gp)
+      if(min(p.r$lon)<Options$vp.lon.min) {
+        p.r$lon<-p.r$lon+360
+        grid.polygon(x=unit(p.r$lon,'native'),
+                     y=unit(p.r$lat,'native'),
+                     gp=gp)
+      }
+      if(max(p.r$lon)>Options$vp.lon.max) {
+         p.r$lon<-p.r$lon-360
+         grid.polygon(x=unit(p.r$lon,'native'),
+                      y=unit(p.r$lat,'native'),
+                      gp=gp)
+    
+      }
+    }
+  }
+
 }
 
 plot.field<-function(field,land,year,month,idx) {    
@@ -87,7 +113,7 @@ plot.field<-function(field,land,year,month,idx) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
-    Options<-set.pole(((year-1870)*12+month)*smooth*2+idx)
+    Options<-set.pole(((year-1850)*12+month)*smooth*2+idx)
     land<-WeatherMap.get.land(Options)
     
      png(ifile.name,
@@ -101,8 +127,8 @@ plot.field<-function(field,land,year,month,idx) {
   	   pushViewport(dataViewport(c(Options$vp.lon.min,Options$vp.lon.max),
   				     c(Options$lat.min,Options$lat.max),
   				      extension=0))
-      Draw.temperature(field,Options,Trange=4)
       WeatherMap.draw.land(land,Options)
+      Draw.temperature(field,Options,Trange=4)
       #WeatherMap.draw.label(Options)
       gc()
     dev.off()
@@ -134,7 +160,22 @@ plot.month<-function(year,month,member) {
   m<-HadCRUT.get.member.at.month(year,month,member)
   for(s in seq(1,smooth)) {
     d<-m
-    d$data[]<-m$data*weights[s]+last.m$data*(1-weights[s])
+    d$alpha<-d$data
+    w<-which(!is.na(m$data) & !is.na(last.m$data))
+    if(length(w)>0) {
+       d$data[w]<-m$data[w]*weights[s]+last.m$data[w]*(1-weights[s])
+       d$alpha[w]<-1
+     }
+    w<-which(!is.na(m$data) & is.na(last.m$data))
+    if(length(w)>0) {            
+       d$data[w]<-m$data[w]
+       d$alpha[w]<-weights[s]
+     }
+    w<-which(is.na(m$data) & !is.na(last.m$data))
+    if(length(w)>0) {            
+       d$data[w]<-last.m$data[w]
+       d$alpha[w]<-1-weights[s]
+     }             
     plot.field(d,land,year,month,s)
   }
   next.year<-year
@@ -146,7 +187,22 @@ plot.month<-function(year,month,member) {
   next.m<-HadCRUT.get.member.at.month(next.year,next.month,member)
   for(s in seq(1,smooth)) {
     d<-m
-    d$data[]<-m$data*weights[smooth-s+1]+next.m$data*(1-weights[smooth-s+1])
+    d$alpha<-d$data
+    w<-which(!is.na(m$data) & !is.na(next.m$data))
+    if(length(w)>0) {
+       d$data[]<-m$data*weights[smooth-s+1]+next.m$data*(1-weights[smooth-s+1])
+       d$alpha[w]<-1
+     }
+    w<-which(!is.na(m$data) & is.na(next.m$data))
+    if(length(w)>0) {            
+       d$data[w]<-m$data[w]
+       d$alpha[w]<-weights[smooth-s+1]
+     }
+    w<-which(is.na(m$data) & !is.na(next.m$data))
+    if(length(w)>0) {            
+       d$data[w]<-next.m$data[w]
+       d$alpha[w]<-1-weights[smooth-s+1]
+     }
     plot.field(d,land,year,month,s+smooth)
   }
   
