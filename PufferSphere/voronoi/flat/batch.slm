@@ -1,0 +1,11 @@
+#!/bin/ksh -l
+#SBATCH --qos=normal
+#SBATCH --mem=50000
+#SBATCH --ntasks=16
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=250
+
+sbatch -d afternotok:$SLURM_JOB_ID batch.slm
+sbatch -d afterok:$SLURM_JOB_ID ffmpeg.slm
+
+./make_year_plots.R
