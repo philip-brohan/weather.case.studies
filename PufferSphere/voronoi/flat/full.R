@@ -15,7 +15,7 @@ Year<-2014
 Month<-1
 Day<-1
 Hour<-1
-n.total<-200#365*24
+n.total<-4513#365*24
 version<-'3.5.1'
 cores<-24
 
@@ -58,7 +58,7 @@ Options$ice.points<-100000
 
 cols <- brewer.pal(9,"Greys")
 col<-rgb(113,113,113,maxColorValue=255)
-alphas<-seq(0.025,0.175,0.005)
+alphas<-seq(0.325,0.475,0.005)
 
 Options$mslp.base=101325                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
