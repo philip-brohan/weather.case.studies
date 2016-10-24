@@ -11,10 +11,10 @@ library(RColorBrewer)
 library(chron)
 
 Year<-2014
-Month<-1
-Day<-1
+Month<-3
+Day<-23
 Hour<-1
-n.total<-365*24
+n.total<-284*24
 version<-'3.5.1'
 cores<-6
 

@@ -67,11 +67,10 @@ set.pole<-function(step,Options) {
 Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
 
   M<-GSDF.WeatherMap:::WeatherMap.rotate.pole(mslp,Options)
-  M<-GSDF:::GSDF.pad.longitude(M) # Extras for periodic boundary conditions
   lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
   longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
     # Need particular data format for contourLines
-  maxl<-Options$vp.lon.max+2
+  maxl<-Options$vp.lon.max
   if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > maxl ) {
     if(lats[2]<lats[1]) lats<-rev(lats)
     if(longs[2]<longs[1]) longs<-rev(longs)
@@ -82,7 +81,10 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
     M2$dimensions[[GSDF.find.dimension(M,'lon')]]$values<-longs
     M<-GSDF.regrid.2d(M,M2)
   }
-  z<-matrix(data=M$data,nrow=length(longs),ncol=length(lats))
+  M<-GSDF:::GSDF.pad.longitude(M) # Extras for periodic boundary conditions
+  lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
+  longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
+   z<-matrix(data=M$data,nrow=length(longs),ncol=length(lats))
   contour.levels<-seq(Options$mslp.base-Options$mslp.range,
                       Options$mslp.base+Options$mslp.range,
                       Options$mslp.step)
