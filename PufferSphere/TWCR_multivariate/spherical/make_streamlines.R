@@ -8,19 +8,16 @@ library(GSDF.WeatherMap)
 library(grid)
 library(deldir)
 library(RColorBrewer)
-library(chron)
+library(lubridate)
 
 Year<-2014
-Month<-6
-Day<-12
+Month<-1
+Day<-31
 Hour<-1
-n.total<-200*24
+n.total<-334*24
 version<-'3.5.1'
-cores<-6
 
-c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
-          times=sprintf("%02d:00:00",Hour),
-          format=c(dates='y/m/d',times='h:m:s'))
+c.date<-ymd_hms(sprintf("%04d-%02d-%02d:%02d:00:00",Year,Month,Day,Hour))
 
 
 GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
@@ -55,7 +52,7 @@ set.pole<-function(step,Options) {
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   min.lon<-((step-1000)/5)%%360-180
   Options<-WeatherMap.set.option(Options,'lon.min',min.lon-10)
-  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+380)
+  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+370)
   Options<-WeatherMap.set.option(Options,'vp.lon.min',min.lon   )
   Options<-WeatherMap.set.option(Options,'vp.lon.max',min.lon+360)
   return(Options)
@@ -123,13 +120,14 @@ make.streamlines<-function(year,month,day,hour,Options,streamlines=NULL) {
 s<-NULL
 for(n.count in seq(0,n.total)) {
 
-    n.date<-c.date+n.count/24
-    year<-as.numeric(as.character(years(n.date)))
-    month<-months(n.date)
-    day<-days(n.date)
+    n.date<-c.date+days(as.integer(n.count/24))
+    year<-year(n.date)
+    month<-month(n.date)
+    day<-day(n.date)
     hour<-(n.count+Hour)%%24
 
-    Options<-set.pole(n.count,Options)
+    step<-as.integer(ymd(sprintf("%04d-%02d-%02d",year,month,day))-ymd("2014-01-01"))*24+hour
+    Options<-set.pole(step,Options)
 
     # serial component - streamlines evolve from hour to hour
     s<-make.streamlines(year,month,day,hour,Options,streamlines=s)
