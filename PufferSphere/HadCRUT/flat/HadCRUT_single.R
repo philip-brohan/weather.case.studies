@@ -1,6 +1,7 @@
 #!/usr/bin/Rscript --no-save
 
 # HadCRUT4 monthly (interpolated)
+# Flat projection version
 
 library(GSDF)
 library(GSDF.WeatherMap)
@@ -17,7 +18,7 @@ if ( is.null(opt$year) )   { stop("Year not specified") }
 if ( is.null(opt$month) )  { stop("Month not specified") }
 if ( is.null(opt$member) ) { opt$member<-1 }
 
-Imagedir<-sprintf("%s/images/HadCRUT4.red_blue",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/HadCRUT4.red_blue.flat",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 Options<-WeatherMap.set.option(NULL)
@@ -41,13 +42,13 @@ Options<-WeatherMap.set.option(Options,'pole.lat',35)
 cols<-brewer.pal(11,"RdBu")
 
 set.pole<-function(step) {
-  if(step<=1000) return(Options)
-  lon<-160+((step-1000)/10)+0.01
+  if(step<=100) return(Options)
+  lon<-160+((step-100)/10)+0.01
   if(lon>360) lon<-lon%%360
-  lat<-35+sin((step-1000)/500)*20
+  lat<-35+sin((step-100)/500)*20
   Options<-WeatherMap.set.option(Options,'pole.lon',lon)
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
-  min.lon<-((step-1000)/5)%%360-180
+  min.lon<-((step-100)/5)%%360-180
   Options<-WeatherMap.set.option(Options,'lon.min',min.lon-10)
   Options<-WeatherMap.set.option(Options,'lon.max',min.lon+380)
   Options<-WeatherMap.set.option(Options,'vp.lon.min',min.lon   )
@@ -117,7 +118,7 @@ plot.field<-function(field,land,year,month,idx) {
     land<-WeatherMap.get.land(Options)
     
      png(ifile.name,
-             width=1080*2,
+             width=1080*16/9,
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,
@@ -129,7 +130,10 @@ plot.field<-function(field,land,year,month,idx) {
   				      extension=0))
       WeatherMap.draw.land(land,Options)
       Draw.temperature(field,Options,Trange=4)
-      #WeatherMap.draw.label(Options)
+      bak<-Options$land.colour
+      Options$land.colour<-Options$sea.colour
+      WeatherMap.draw.label(Options)
+      Options$land.colour<-bak
       gc()
     dev.off()
 }

@@ -7,7 +7,7 @@
 
 cd $SCRATCH/images
 
-rm TWCR_multivariate_rotating.mov
+rm TWCR_multivariate_rotating.mp4
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
 find TWCR_multivariate_rotating/*.png -type f -empty -delete
