@@ -184,4 +184,4 @@ n.count <-opt$step
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     plot.hour(year,month,day,hour,n.count)
 
-    system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
+    #system(sprintf("mogrify -gamma 0.6 %s",ifile.name))

@@ -141,7 +141,7 @@ plot.field<-function(field,land,year,month,idx) {
       #WeatherMap.draw.label(Options)
       gc()
     dev.off()
-    system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
+    #system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
 }
 
 # Interpolate smoothly between months

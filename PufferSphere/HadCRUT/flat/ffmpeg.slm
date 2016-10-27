@@ -12,4 +12,9 @@ rm HadCRUT4.red_blue.flat.mp4
 #  These usually come from disc problems in the creation step.
 find HadCRUT4.red_blue.flat/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i HadCRUT4.red_blue.flat/\*.png -i goldberg.mp3 -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadCRUT4.red_blue.flat.mp4
+# Want the video and audio to be exactly the same length
+#ffprobe -i goldberg.mp3  -show_entries  format=duration -v quiet 
+#ffprobe -i HadCRUT4.red_blue.flat.mp4  -show_entries  format=duration -v quiet 
+#ffmpeg  -i goldberg.mp3 -filter:a atempo="0.9958366" aSync.mp3
+ffmpeg -r 24 -pattern_type glob -i HadCRUT4.red_blue.flat/\*.png -i goldberg.mp3 -shortest -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadCRUT4.red_blue.flat.mp4
+ 

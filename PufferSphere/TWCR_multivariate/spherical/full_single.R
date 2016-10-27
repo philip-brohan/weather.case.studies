@@ -177,7 +177,6 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     prate<-TWCR.get.slice.at.hour('prate',year,month,day,hour,version=version)
 
     step<-as.integer(ymd(sprintf("%04d-%02d-%02d",year,month,day))-ymd("2014-01-01"))*24+hour
-    #if(hour==0) step<-step+24
     Options<-set.pole(step,Options)
     land<-WeatherMap.get.land(Options)
 
@@ -209,7 +208,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,hour)
     dev.off()
     
-    system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
+    #system(sprintf("mogrify -gamma 0.6 %s",ifile.name))
 }
 
 # Use pre-calculated streamlines
