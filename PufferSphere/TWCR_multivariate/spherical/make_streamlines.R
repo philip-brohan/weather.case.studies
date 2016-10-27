@@ -12,9 +12,9 @@ library(lubridate)
 
 Year<-2014
 Month<-1
-Day<-31
+Day<-1
 Hour<-1
-n.total<-334*24
+n.total<-365*24
 version<-'3.5.1'
 
 c.date<-ymd_hms(sprintf("%04d-%02d-%02d:%02d:00:00",Year,Month,Day,Hour))
@@ -120,7 +120,9 @@ make.streamlines<-function(year,month,day,hour,Options,streamlines=NULL) {
 s<-NULL
 for(n.count in seq(0,n.total)) {
 
+    hour<-(n.count+Hour)%%24
     n.date<-c.date+days(as.integer(n.count/24))
+    if(hour==0) n.date<-n.date+days(1)
     year<-year(n.date)
     month<-month(n.date)
     day<-day(n.date)

@@ -12,4 +12,4 @@ rm HadCRUT4.red_blue.flat.mp4
 #  These usually come from disc problems in the creation step.
 find HadCRUT4.red_blue.flat/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i HadCRUT4.red_blue.flat/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadCRUT4.red_blue.flat.mp4
+ffmpeg -r 24 -pattern_type glob -i HadCRUT4.red_blue.flat/\*.png -i goldberg.mp3 -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadCRUT4.red_blue.flat.mp4

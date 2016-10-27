@@ -39,7 +39,7 @@ Options$obs.size<- 0.5
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',35)
 
-cols<-brewer.pal(11,"RdBu")
+cols<-colorRampPalette(brewer.pal(11,"RdBu"))(100)
 
 set.pole<-function(step) {
   if(step<=100) return(Options)
@@ -69,13 +69,22 @@ HadCRUT.get.member.at.month<-function(year,month,member) {
   return(field)
 }
 
-Draw.temperature<-function(temperature,Options,Trange=5) {
+sigmoid<-function(x) {
+  s<-as.integer(100*(1 / (1 + exp(x))))+1
+  s<-max(1,min(s,100))
+  return(s)
+}
+set.temperature.colour<-function(data) {
+    return(cols[sigmoid(data)])
+}    
+
+Draw.temperature<-function(temperature,Options) {
 
   for(lon in seq_along(temperature$dimensions[[1]]$values)) {
     for(lat in seq_along(temperature$dimensions[[2]]$values)) {
       if(is.na(temperature$data[lon,lat,1])) next
-      col.i<-as.integer(length(cols)*min(0.99,max(0.01,(temperature$data[lon,lat,1]+Trange)/(Trange*2))))+1
-      gp<-gpar(col=cols[col.i],fill=cols[col.i],alpha=temperature$alpha[lon,lat,1])
+      col<-set.temperature.colour(temperature$data[lon,lat,1])
+      gp<-gpar(col=col,fill=col,alpha=temperature$alpha[lon,lat,1])
       x<-temperature$dimensions[[1]]$values[lon]
       dx<-(temperature$dimensions[[1]]$values[2]-temperature$dimensions[[1]]$values[1])*0.6
       if(x<Options$vp.lon.min-dx/2) x<-x+360
@@ -129,7 +138,7 @@ plot.field<-function(field,land,year,month,idx) {
   				     c(Options$lat.min,Options$lat.max),
   				      extension=0))
       WeatherMap.draw.land(land,Options)
-      Draw.temperature(field,Options,Trange=4)
+      Draw.temperature(field,Options)
       bak<-Options$land.colour
       Options$land.colour<-Options$sea.colour
       WeatherMap.draw.label(Options)

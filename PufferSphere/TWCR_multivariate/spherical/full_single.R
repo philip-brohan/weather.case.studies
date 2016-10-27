@@ -70,7 +70,7 @@ set.pole<-function(step,Options) {
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   min.lon<-((step-1000)/5)%%360-180
   Options<-WeatherMap.set.option(Options,'lon.min',min.lon-10)
-  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+380)
+  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+370)
   Options<-WeatherMap.set.option(Options,'vp.lon.min',min.lon   )
   Options<-WeatherMap.set.option(Options,'vp.lon.max',min.lon+360)
   return(Options)
@@ -177,6 +177,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     prate<-TWCR.get.slice.at.hour('prate',year,month,day,hour,version=version)
 
     step<-as.integer(ymd(sprintf("%04d-%02d-%02d",year,month,day))-ymd("2014-01-01"))*24+hour
+    #if(hour==0) step<-step+24
     Options<-set.pole(step,Options)
     land<-WeatherMap.get.land(Options)
 
