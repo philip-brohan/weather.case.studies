@@ -4,9 +4,11 @@
 library(lubridate)
 
 current.day<-ymd("1870-01-01")
+#current.day<-ymd("1905-01-01")
 
 end.day<-ymd("2012-01-01")
-# How may steps in one job
+#end.day<-ymd("1907-01-01")
+# How many steps in one job
 #  (SPICE does not like thousands of very short jobs)
 per.job<-1
 

@@ -179,6 +179,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     step<-as.integer(ymd(sprintf("%04d-%02d-%02d",year,month,day))-ymd("2014-01-01"))*24+hour
     Options<-set.pole(step,Options)
     land<-WeatherMap.get.land(Options)
+    land<-GSDF:::GSDF.pad.longitude(land)
 
      png(ifile.name,
              width=1080*2,

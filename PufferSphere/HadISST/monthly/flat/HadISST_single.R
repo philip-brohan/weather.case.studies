@@ -23,7 +23,7 @@ if ( is.null(opt$member) ) { opt$member<-137 }
 
 Members<-c(1059,115,1169,1194,1346,137,1466,396,400,69)
 
-Imagedir<-sprintf("%s/images/HadISST.2.1.red_blue",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/HadISST.2.1.red_blue.flat",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 Options<-WeatherMap.set.option(NULL)
@@ -157,9 +157,10 @@ plot.field<-function(sst,ice,land,year,month,idx) {
 
     Options<-set.pole(((year-1870)*12+month)*smooth*2+idx)
     land<-WeatherMap.get.land(Options)
+    land<-GSDF:::GSDF.pad.longitude(land)
     
      png(ifile.name,
-             width=1080*2,
+             width=1080*16/9,
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,
@@ -175,7 +176,10 @@ plot.field<-function(sst,ice,land,year,month,idx) {
                                                        maxColorValue=255))
       WeatherMap.draw.ice(ip$lat,ip$lon,ice,Options)
       WeatherMap.draw.land(land,Options)
-      #WeatherMap.draw.label(Options)
+      bak<-Options$land.colour
+      Options$land.colour<-Options$sea.colour
+      WeatherMap.draw.label(Options)
+      Options$land.colour<-bak
     dev.off()
 }
 

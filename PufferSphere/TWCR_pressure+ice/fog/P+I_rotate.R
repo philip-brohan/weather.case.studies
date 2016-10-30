@@ -148,6 +148,7 @@ plot.hour<-function(year,month,day,hour,step) {
 
     Options<-set.pole(step,Options)
     land<-WeatherMap.get.land(Options)
+    land<-GSDF:::GSDF.pad.longitude(land)
 
      png(ifile.name,
              width=2160,
