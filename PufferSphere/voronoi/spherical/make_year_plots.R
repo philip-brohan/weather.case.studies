@@ -14,7 +14,7 @@ Year<-2014
 Month<-1
 Day<-1
 Hour<-0
-n.total<-1000#365*24
+n.total<-365*24
 version<-'3.5.1'
 cores<-16
 
@@ -190,6 +190,7 @@ for(n.count in seq(0,n.total)) {
     #plot.hour(year,month,day,hour,s)
     mcparallel(plot.hour(year,month,day,hour,s))
     if(n.count%%cores==0) mccollect(wait=TRUE)
+    gc()
 
 }
 mccollect()

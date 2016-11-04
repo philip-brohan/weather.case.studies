@@ -38,7 +38,9 @@ Options$obs.size<- 0.5
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',35)
 
-cols<-colorRampPalette(brewer.pal(11,"RdBu"))(100)
+cols.base<-brewer.pal(11,"RdBu")
+cols.base<-c(cols.base[1:4],"#E0E0E0",cols.base[8:11]) # Filter out the white bits
+cols<-colorRampPalette(cols.base)(100)
 
 set.pole<-function(step) {
   if(step<=1000) return(Options)

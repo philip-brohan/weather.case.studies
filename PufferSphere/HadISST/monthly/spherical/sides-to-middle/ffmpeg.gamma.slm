@@ -12,4 +12,4 @@ rm HadISST.2.1.red_blue.stom.gamma.mov
 #  These usually come from disc problems in the creation step.
 find HadISST.2.1.red_blue.stom/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i HadISST.2.1.red_blue.stom/\*.png -c:v libx264 -threads 16 -vf eq=gamma=0.6 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadISST.2.1.red_blue.stom.gamma.mov
+ffmpeg -r 24 -pattern_type glob -i HadISST.2.1.red_blue.stom/\*.png -c:v libx264 -threads 16 -vf eq=saturation=2.9 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadISST.2.1.red_blue.stom.gamma.mov

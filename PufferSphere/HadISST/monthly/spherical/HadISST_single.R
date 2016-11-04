@@ -46,7 +46,9 @@ Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',35)
 Options$ice.points<-100000
 
-cols<-colorRampPalette(brewer.pal(11,"RdBu"))(100)
+cols.base<-brewer.pal(11,"RdBu")
+cols.base<-c(cols.base[1:4],"#E0E0E0",cols.base[8:11]) # Filter out the white bits
+cols<-colorRampPalette(cols.base)(100)
 
 set.pole<-function(step) {
   if(step<=1000) return(Options)
@@ -181,20 +183,18 @@ plot.field<-function(sst,ice,land,year,month,idx) {
 }
 
 # Interpolate smoothly between months
-smooth<-3
+smooth<-6
 s<-seq(1,smooth)
 weights<-0.5+(s-0.5)*(0.5/smooth)
 plot.month<-function(year,month,member) {    
 
   icount<-0
   for(i in seq(1,smooth*2)) {
-     image.name<-sprintf("%04d-%02d.%02d.png",year,month,1)
+     image.name<-sprintf("%04d-%02d.%02d.png",year,month,i)
      ifile.name<-sprintf("%s/%s",Imagedir,image.name)
      if(file.exists(ifile.name) && file.info(ifile.name)$size>0) icount<-icount+1
   }
   if(icount==smooth*2) return()
-
-  land<-WeatherMap.get.land(Options)
   
   last.year<-year
   last.month<-month-1
