@@ -6,7 +6,7 @@ library(lubridate)
 current.day<-ymd("1870-01-01")
 #current.day<-ymd("1905-01-01")
 
-end.day<-ymd("1890-01-01")
+end.day<-ymd("2012-01-01")
 #end.day<-ymd("1907-01-01")
 
 while(current.day<=end.day) {

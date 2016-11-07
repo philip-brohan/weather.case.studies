@@ -3,10 +3,10 @@
 
 library(lubridate)
 
-current.day<-ymd("1870-01-01")
+current.day<-ymd("2014-01-01")
 #current.day<-ymd("1905-01-01")
 
-end.day<-ymd("2012-01-01")
+end.day<-ymd("2014-12-31")
 #end.day<-ymd("1907-01-01")
 # How many steps in one job
 #  (SPICE does not like thousands of very short jobs)
@@ -20,7 +20,7 @@ while(current.day<=end.day) {
     while(step<=12) {
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
-      cat('#SBATCH --output=/scratch/hadpb/slurm_output/HadISST-%j.out\n')
+      cat('#SBATCH --output=/scratch/hadpb/slurm_output/P+I_rotating-%j.out\n')
       cat('#SBATCH --qos=normal\n')
       cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
@@ -28,17 +28,17 @@ while(current.day<=end.day) {
       cat('#SBATCH --time=10\n')
       this.job<-0
       while(step<=12 && this.job<per.job) {
-         for(i in seq(1,12)) {
-           in.file<-sprintf("%s/images/HadISST.2.1.red_blue/%04d-%02d.%02d.png",
+         for(i in seq(0,24)) {
+           in.file<-sprintf("%s/images/P+I_rotating/%04d-%02d-%02d:%02d.png",
                             Sys.getenv('SCRATCH'),year(current.day),
-                            month(current.day),i)
-           out.file<-sprintf("%s/images/HadISST.2.1.red_blue.stom/%04d-%02d.%02d.png",
+                            month(current.day),day(current.day),i)
+           out.file<-sprintf("%s/images/P+I_rotating.stom/%04d-%02d-%02d:%02d.png",
                             Sys.getenv('SCRATCH'),year(current.day),
-                            month(current.day),i)
-         cat(sprintf("../check_seam.R --input=%s --output=%s\n",
+                            month(current.day),day(current.day),i)
+         cat(sprintf("./check_seam.R --input=%s --output=%s\n",
                      in.file,out.file))
          }
-         current.day<-current.day+months(1)
+         current.day<-current.day+days(1)
          this.job<-this.job+1
          step<-step+1
       }

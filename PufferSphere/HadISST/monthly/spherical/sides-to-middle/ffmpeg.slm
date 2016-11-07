@@ -7,9 +7,9 @@
 
 cd $SCRATCH/images
 
-rm HadISST.2.1.red_blue.stom.gamma.mov
+rm HadISST.2.1.red_blue.stom.mov
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
 find HadISST.2.1.red_blue.stom/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i HadISST.2.1.red_blue.stom/\*.png -filter:v 'fade=in:0:48,fade=out:20219:48' -c:v libx264 -threads 16 -vf eq=saturation=2.9 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy HadISST.2.1.red_blue.stom.gamma.mov
+ffmpeg -r 24 -pattern_type glob -i HadISST.2.1.red_blue.stom/\*.png -filter:v 'fade=in:0:48,fade=out:20219:48' -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 32 -c:a copy HadISST.2.1.red_blue.stom.mov

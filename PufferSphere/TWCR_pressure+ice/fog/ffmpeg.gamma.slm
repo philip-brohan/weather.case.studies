@@ -12,4 +12,4 @@ rm P+I_rotating_1916.gamma.mov
 #  These usually come from disc problems in the creation step.
 find P+I_rotating_1916/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i P+I_rotating_1916/\*.png -c:v libx264 -threads 16 -vf eq=gamma=0.6 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy P+I_rotating_1916.gamma.mov
+ffmpeg -r 24 -pattern_type glob -i P+I_rotating_1916/\*.png -filter:v 'fade=in:0:48,fade=out:8703:48' -c:v libx264 -threads 16 -vf eq=saturation=2.9  -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy P+I_rotating_1916.gamma.mov
