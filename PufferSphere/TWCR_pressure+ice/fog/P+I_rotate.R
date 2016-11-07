@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+#!/opt/local/bin/Rscript
 
 # Pressure and ice only - for the PufferSphere
 # Run a single timestep only - designed to be run in parallel on SPICE.
@@ -21,7 +21,7 @@ Day<-2
 Hour<-0
 version<-'3.5.1'
 member<-12
-fog.threshold<-exp(3)
+fog.threshold<-exp(1)
 
 Imagedir<-sprintf("%s/images/P+I_rotating_1916",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
@@ -45,14 +45,16 @@ Options<-WeatherMap.set.option(Options,'land.colour',rgb(0,0,0,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'sea.colour',rgb(100,100,100,255,
                                                        maxColorValue=255))
+Options<-WeatherMap.set.option(Options,'obs.colour',rgb(238,232,170,255,
+                                                       maxColorValue=255))
 Options$mslp.base=101325                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=500                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
-Options$mslp.lwd=4
+Options$mslp.lwd=5
 Options$fog.colour<-c(0.65,0.65,0.65)        # 0-1, bigger -> lighter fog
-Options$fog.min.transparency<-1.0           # 0-1, bigger -> thicker fog
-Options<-WeatherMap.set.option(Options,'obs.size',1.0)
+Options$fog.min.transparency<-0.95           # 0-1, bigger -> thicker fog
+Options<-WeatherMap.set.option(Options,'obs.size',1.5)
 
 Options$ice.points<-100000
 
@@ -144,7 +146,10 @@ plot.hour<-function(year,month,day,hour,step) {
                                              type='normal')
     prmsl<-GSDF.regrid.2d(prmsl.T,prmsl.spread)
     fog<-TWCR.relative.entropy(prmsl.normal,prmsl.sd,prmsl,prmsl.spread)
-    fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+    #fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+    w<-which(fog$data<fog.threshold)
+    fog$data[w]<-1
+    fog$data[-w]<-0
 
     Options<-set.pole(step,Options)
     land<-WeatherMap.get.land(Options)
@@ -165,7 +170,8 @@ plot.hour<-function(year,month,day,hour,step) {
           obs<-TWCR.get.obs(year,month,day,hour,version=version)
           WeatherMap.draw.obs(obs,Options)
     
-          Draw.pressure(prmsl.T,Options,colour=c(0.91,0.46,0))
+          #Draw.pressure(prmsl.T,Options,colour=c(0.91,0.46,0))
+          Draw.pressure(prmsl.T,Options,colour=c(255/255,70/255,0))
           WeatherMap.draw.fog(fog,Options)
 
      upViewport()
