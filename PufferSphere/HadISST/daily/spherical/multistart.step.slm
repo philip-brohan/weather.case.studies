@@ -1,0 +1,8 @@
+#!/bin/ksh -l
+#SBATCH --output=/scratch/hadpb/slurm_output/HadISST2.2-%j.out
+#SBATCH --qos=normal
+#SBATCH --mem=5000
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-core=2
+#SBATCH --time=5
+./HadISST_single.R --year=2013 --month=1 --day=2

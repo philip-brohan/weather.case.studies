@@ -1,4 +1,4 @@
-#!/opt/local/bin/Rscript
+#!/usr/bin/Rscript
 
 # Pull down 20CR data for a year from NERSC (to $SCRATCH)
 # Needs password-free ssh to pbrohan account at NERSC
