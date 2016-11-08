@@ -7,9 +7,9 @@
 
 cd $SCRATCH/images
 
-rm P+I_rotating_1916.stom.gamma.mov
+rm P+I_rotating_1916.stom.mov
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
 find P+I_rotating_1916.stom/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i P+I_rotating_1916.stom/\*.png -c:v libx264 -threads 16 -vf eq=saturation=2.9 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy P+I_rotating_1916.stom.gamma.mov
+ffmpeg -r 24 -pattern_type glob -i P+I_rotating_1916.stom/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy P+I_rotating_1916.stom.mov
