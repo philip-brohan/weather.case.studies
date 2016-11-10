@@ -3,10 +3,10 @@
 
 library(lubridate)
 
-current.day<-ymd("1998-01-01")
+current.day<-ymd("1998-01-04")
 #current.day<-ymd("1905-01-01")
 
-end.day<-ymd("1998-12-31")
+end.day<-ymd("1998-01-30")
 #end.day<-ymd("1907-01-01")
 # How many steps in one job
 #  (SPICE does not like thousands of very short jobs)
@@ -16,8 +16,6 @@ while(current.day<=end.day) {
   in.system<-system('squeue --user hadpb',intern=TRUE)
   n.new.jobs<-1000-length(in.system)
   if(n.new.jobs>30) {
-    step<-1
-    while(step<=12) {
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
       cat('#SBATCH --output=/scratch/hadpb/slurm_output/TWCR_assimilation-%j.out\n')
@@ -26,25 +24,18 @@ while(current.day<=end.day) {
       cat('#SBATCH --ntasks=1\n')
       cat('#SBATCH --ntasks-per-core=2\n')
       cat('#SBATCH --time=10\n')
-      this.job<-0
-      while(step<=12 && this.job<per.job) {
-         for(i in seq(0,24)) {
-           in.file<-sprintf("%s/images/1998-assimilation-rotating/%04d-%02d-%02d:%02d.png",
+
+      in.files<-Sys.glob(sprintf("%s/images/1998-assimilation-rotating/%04d-%02d-%02d*.png",
                             Sys.getenv('SCRATCH'),year(current.day),
-                            month(current.day),day(current.day),i)
-           out.file<-sprintf("%s/images/1998-assimilation-rotating.stom/%04d-%02d-%02d:%02d.png",
-                            Sys.getenv('SCRATCH'),year(current.day),
-                            month(current.day),day(current.day),i)
+                            month(current.day),day(current.day)))
+      out.files<-sub('rotating','rotating.stom',in.files)
+      for(i in seq_along(in.files)) {
          cat(sprintf("./check_seam.R --input=%s --output=%s\n",
-                     in.file,out.file))
-         }
-         current.day<-current.day+days(1)
-         this.job<-this.job+1
-         step<-step+1
+                     in.files[i],out.files[i]))
       }
+      current.day<-current.day+days(1)
       sink()
       system('sbatch multistart.step.slm')
     }
-  }
-  if(current.day<=end.day) Sys.sleep(2)
+  if(current.day<=end.day) Sys.sleep(1)
 }

@@ -3,7 +3,7 @@
 
 library(lubridate)
 
-current.day<-ymd("1981-01-01")
+current.day<-ymd("1961-01-01")
 
 end.day<-ymd("2012-12-31")
 
