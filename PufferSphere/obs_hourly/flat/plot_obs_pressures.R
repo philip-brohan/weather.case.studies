@@ -55,7 +55,7 @@ Options$mslp.lwd<-1
 Options$mslp.base=0                         # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.crange=3000                    # Anomaly for max contour colour
-Options$mslp.step=1000                      # Smaller -more contours
+Options$mslp.step=100                      # Smaller -more contours
 Options$mslp.tpscale=350                    # Smaller -contours less transparent
 # Overrides mslp options options
 contour.levels<-seq(-300,300,30)
