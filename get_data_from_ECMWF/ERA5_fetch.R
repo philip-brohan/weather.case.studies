@@ -26,6 +26,10 @@ vars<-c('2t','10u','10v','msl','ci','sst')
 
 get.surface.analysis<-function(var) {
  fname<-tempfile()
+ target.dir<-sprintf("%s/%s/hourly/%04d/%02d/%02d",local.dir,opt$stream,opt$year,opt$month,opt$day)
+ if(!file.exists(target.dir)) dir.create(target.dir,recursive=TRUE)
+ target.file<-(sprintf("%s/%s.nc",target.dir,var))
+ if(file.exists(target.file) && file.info(target.file)$size>0) return() # already done
  sink(fname)
  cat('#!/usr/bin/env python\n')
  cat('from ecmwfapi import ECMWFDataServer\n')
@@ -33,7 +37,7 @@ get.surface.analysis<-function(var) {
  cat('server.retrieve({\n')
  cat('   \'dataset\'   : "era5_test",\n')
  cat(sprintf("   'stream'    : \"%s\",\n",opt$stream))
- cat('   \'type\'      : "fc",\n')
+ cat('   \'type\'      : "an",\n')
  cat('   \'levtype\'   : "sfc",\n')
  cat(sprintf("   \'param\'     : \"%s\",\n",var))
  cat('   \'grid\'      : "0.25/0.25",\n')
@@ -42,21 +46,23 @@ get.surface.analysis<-function(var) {
                                opt$year,opt$month,opt$day,
 			       opt$year,opt$month,opt$day))
  cat('   \'format\'    : "netcdf",\n')
- target.dir<-sprintf("%s/%s/hourly/%04d/%02d/%02d",local.dir,opt$stream,opt$year,opt$month,opt$day)
- if(!file.exists(target.dir)) dir.create(target.dir,recursive=TRUE)
- cat(sprintf("   'target'    : \"%s/%s.nc\",\n",target.dir,var))
+ cat(sprintf("   'target'    : \"%s\",\n",target.file))
  cat('})')
  sink()
  system(sprintf("python %s",fname))
  unlink(fname)
 }
-lapply(vars,get.surface.analysis)
+s<-lapply(vars,get.surface.analysis)
 
 # Surface data - forecast
 vars<-c('tp')
 
 get.surface.forecast<-function(var) {
  fname<-tempfile()
+ target.dir<-sprintf("%s/%s/hourly/%04d/%02d/%02d",local.dir,opt$stream,opt$year,opt$month,opt$day)
+ if(!file.exists(target.dir)) dir.create(target.dir,recursive=TRUE)
+ target.file<-(sprintf("%s/%s.nc",target.dir,var))
+ if(file.exists(target.file) && file.info(target.file)$size>0) return() # already done
  sink(fname)
  cat('#!/usr/bin/env python\n')
  cat('from ecmwfapi import ECMWFDataServer\n')
@@ -74,13 +80,11 @@ get.surface.forecast<-function(var) {
                                opt$year,opt$month,opt$day,
 			       opt$year,opt$month,opt$day))
  cat('   \'format\'    : "netcdf",\n')
- target.dir<-sprintf("%s/%s/hourly/%04d/%02d/%02d",local.dir,opt$stream,opt$year,opt$month,opt$day)
- if(!file.exists(target.dir)) dir.create(target.dir,recursive=TRUE)
- cat(sprintf("   'target'    : \"%s/%s.nc\",\n",target.dir,var))
+ cat(sprintf("   'target'    : \"%s\",\n",target.file))
  cat('})')
  sink()
  system(sprintf("python %s",fname))
  unlink(fname)
 }
 
-lapply(vars,get.surface.forecast)
+s<-lapply(vars,get.surface.forecast)
