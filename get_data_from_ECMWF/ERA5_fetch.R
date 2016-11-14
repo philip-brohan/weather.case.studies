@@ -11,7 +11,7 @@ opt = getopt(matrix(c(
   'year',         'y', 2, 'integer',
   'month',        'm', 2, 'integer',
   'day',          'd', 2, 'integer',
-  'stream',       's', 0, "character"
+  'stream',       's', 2, "character"
 ), byrow=TRUE, ncol=4))
 
 if(is.null(opt$year))     stop('Year must be specified')
