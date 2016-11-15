@@ -166,7 +166,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
              bg=Options$sea.colour,
 	     family='Noto Sans',
              pointsize=24)
-  base.gp<-gpar(family='Noto Sans',font=1,col='black')
+  base.gp<-gpar(fontfamily='Noto Sans',fontface='bold',col='black')
   lon.min<-Options$lon.min
   if(!is.null(Options$vp.lon.min)) lon.min<-Options$vp.lon.min
   lon.max<-Options$lon.max
@@ -194,4 +194,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
 # Use pre-calculated streamlines
 s<-get.streamlines(opt$year,opt$month,opt$day,opt$hour)
 plot.hour(opt$year,opt$month,opt$day,opt$hour,s)
-
+image.name<-sprintf("%04d-%02d-%02d:%02d.pdf",
+                    opt$year,opt$month,opt$day,opt$hour)
+ifile.name<-sprintf("%s/%s",Imagedir,image.name)
+embed_fonts(ifile.name)

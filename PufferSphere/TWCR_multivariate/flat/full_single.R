@@ -22,10 +22,6 @@ if ( is.null(opt$hour) )   { stop("Hour not specified") }
 
 version<-'3.5.1'
 
-GSDF.cache.dir<-sprintf("%s/GSDF.cache",Sys.getenv('SCRATCH'))
-if(!file.exists(GSDF.cache.dir)) dir.create(GSDF.cache.dir,recursive=TRUE)
-local.cache.dir<-sprintf("%s/images/TWCR_voronoi_subtle",Sys.getenv('SCRATCH'))
-if(!file.exists(local.cache.dir)) dir.create(local.cache.dir,recursive=TRUE)
 Imagedir<-sprintf("%s/images/TWCR_multivariate",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
@@ -38,14 +34,14 @@ Options<-WeatherMap.set.option(Options,'ice.colour',rgb(250,250,250,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
-Options<-WeatherMap.set.option(Options,'pole.lat',35)
+Options<-WeatherMap.set.option(Options,'pole.lat',45)
 
 Options<-WeatherMap.set.option(Options,'lat.min',-90)
 Options<-WeatherMap.set.option(Options,'lat.max',90)
-Options<-WeatherMap.set.option(Options,'lon.min',-190)
-Options<-WeatherMap.set.option(Options,'lon.max',190)
-Options$vp.lon.min<- -180
-Options$vp.lon.max<-  180
+Options<-WeatherMap.set.option(Options,'lon.min',-140)
+Options<-WeatherMap.set.option(Options,'lon.max',240)
+Options$vp.lon.min<- -130
+Options$vp.lon.max<-  230
 Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
@@ -90,10 +86,11 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
   lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
   longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
     # Need particular data format for contourLines
-  if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > 182 ) {
+  maxl<-Options$vp.lon.max+2
+  if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > maxl ) {
     if(lats[2]<lats[1]) lats<-rev(lats)
     if(longs[2]<longs[1]) longs<-rev(longs)
-    longs[longs>182]<-longs[longs>182]-364
+    longs[longs>maxl]<-longs[longs>maxl]-(maxl*2)
     longs<-sort(longs)
     M2<-M
     M2$dimensions[[GSDF.find.dimension(M,'lat')]]$values<-lats
@@ -130,7 +127,7 @@ get.streamlines<-function(year,month,day,hour) {
 
 
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
-                           local.cache.dir,year,month,day,hour)
+                           Imagedir,year,month,day,hour)
     if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
        load(sf.name)
        return(s)
