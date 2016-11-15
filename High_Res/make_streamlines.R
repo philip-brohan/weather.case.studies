@@ -7,7 +7,7 @@ library(GSDF.WeatherMap)
 
 year<-2016
 month<-1
-day<-2
+day<-30
 hour<-12
 
 Imagedir<-'.'

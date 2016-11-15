@@ -8,13 +8,13 @@ library(GSDF.ERA5)
 library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(grid)
-library(extrafont)
-loadfonts()
+#library(extrafont)
+#loadfonts()
 
 opt = list(
   year = 2016,
   month = 1,
-  day = 2,
+  day = 30,
   hour = 12
   )
 version<-'3.5.1'
@@ -22,11 +22,11 @@ version<-'3.5.1'
 Imagedir<-sprintf(".",Sys.getenv('SCRATCH'))
 
 Options<-WeatherMap.set.option(NULL)
-Options<-WeatherMap.set.option(Options,'land.colour',rgb(100,100,100,255,
+Options<-WeatherMap.set.option(Options,'land.colour',rgb(180,180,180,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'ice.colour',rgb(250,250,250,255,
+Options<-WeatherMap.set.option(Options,'ice.colour',rgb(255,255,255,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'sea.colour',rgb(150,150,150,255,
+Options<-WeatherMap.set.option(Options,'sea.colour',rgb(220,220,220,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
@@ -44,11 +44,12 @@ Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
 Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.2)
 Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
 Options<-WeatherMap.set.option(Options,'wind.vector.density',0.5)
-Options<-WeatherMap.set.option(Options,'wind.vector.lwd',3)
+Options<-WeatherMap.set.option(Options,'wind.vector.lwd',1)
 Options$ice.points<-100000
 Options<-WeatherMap.set.option(Options,'precip.min.transparency',0.6)
+Options<-WeatherMap.set.option(Options,'fog.min.transparency',0.5)
 
-Options$mslp.base=101325                    # Base value for anomalies
+Options$mslp.base=0                         # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=500                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
@@ -153,10 +154,13 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     land<-WeatherMap.get.land(Options)
     
     t2m<-ERA5.get.slice.at.hour('air.2m',year,month,day,hour)
-    t2n<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,type='normal',version='3.4.1')
-    t2n<-GSDF.regrid.2d(t2n,t2m)
+    t2n<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/air.2m.%02d.Rdata",
+                           Sys.getenv('SCRATCH'),hour))
     t2m$data[]<-t2m$data-t2n$data
     prmsl.T<-ERA5.get.slice.at.hour('prmsl',year,month,day,hour)
+    prn<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/prmsl.%02d.Rdata",
+                           Sys.getenv('SCRATCH'),hour))
+    prmsl.T$data[]<-prmsl.T$data-prn$data
     icec<-ERA5.get.slice.at.hour('icec',year,month,day,hour)
     prate<-ERA5.get.slice.at.hour('prate',year,month,day,hour)
     prate$data[]<-prate$data/3
@@ -164,9 +168,9 @@ plot.hour<-function(year,month,day,hour,streamlines) {
              width=20*16/9,
              height=20,
              bg=Options$sea.colour,
-	     family='Noto Sans',
+	     family='Helvetica',
              pointsize=24)
-  base.gp<-gpar(fontfamily='Noto Sans',fontface='bold',col='black')
+  base.gp<-gpar(fontfamily='Helvetica',fontface='bold',col='black')
   lon.min<-Options$lon.min
   if(!is.null(Options$vp.lon.min)) lon.min<-Options$vp.lon.min
   lon.max<-Options$lon.max
@@ -197,4 +201,4 @@ plot.hour(opt$year,opt$month,opt$day,opt$hour,s)
 image.name<-sprintf("%04d-%02d-%02d:%02d.pdf",
                     opt$year,opt$month,opt$day,opt$hour)
 ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-embed_fonts(ifile.name)
+#embed_fonts(ifile.name)
