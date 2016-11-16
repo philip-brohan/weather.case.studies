@@ -7,7 +7,7 @@
 
 cd $SCRATCH/images
 
-rm TWCR_multivariate.mov
+rm TWCR_multivariate.mp4
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
 find TWCR_multivariate/*.png -type f -empty -delete

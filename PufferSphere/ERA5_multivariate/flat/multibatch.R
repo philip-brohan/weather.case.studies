@@ -3,8 +3,8 @@
 
 library(lubridate)
 
-current.day<-ymd("2014-03-01")
-end.day<-ymd("2014-09-30")
+current.day<-ymd("2016-01-02")
+end.day<-ymd("2016-02-28")
 
 while(current.day<=end.day) {
   in.system<-system('squeue --user hadpb',intern=TRUE)
@@ -14,7 +14,7 @@ while(current.day<=end.day) {
     while(step<n.new.jobs) {
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
-      cat('#SBATCH --output=/scratch/hadpb/slurm_output/TWCR_multivariate-%j.out\n')
+      cat('#SBATCH --output=/scratch/hadpb/slurm_output/ERA5_multivariate-%j.out\n')
       cat('#SBATCH --qos=normal\n')
       cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
