@@ -65,7 +65,7 @@ HadISST.get.sst.at.month<-function(year,month,day,member) {
                         time.range=ymd(sprintf("%04d-%02d-01",1800,1),
                                        sprintf("%04d-%02d-31",2050,12)),
                         lat.range=c(-90,90),lon.range=c(-180,360))
-  if(month==2 && day==29) day==28
+  if(month==2 && day==29) day<-28
   climf.name<-sprintf("%s/HadISST.2.2.0.0/climatology_%02d%02d.Rdata",
                             Sys.getenv('SCRATCH'),month,day)
   clm<-readRDS(climf.name)

@@ -19,7 +19,7 @@ while(current.day<=end.day) {
       cat('#SBATCH --mem=5000\n')
       cat('#SBATCH --ntasks=1\n')
       cat('#SBATCH --ntasks-per-core=2\n')
-      cat('#SBATCH --time=20\n')
+      cat('#SBATCH --time=30\n')
       for(hour in seq(0,23)) {
          cat(sprintf("./full_single.R --year=%d --month=%d --day=%d --hour=%d\n",
                      year(current.day),month(current.day),day(current.day),hour))

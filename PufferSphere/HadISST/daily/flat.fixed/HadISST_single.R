@@ -1,10 +1,6 @@
 #!/usr/bin/Rscript --no-save
 
-# HadISST monthly (interpolated)
-# Data are copied from
-#  /project/hadobs1/OBS/marine/HadISST2/ice/
-# and
-# /project/hadobs1/OBS/marine/HadISST.2.1.0.0/
+# HadISST daily (interpolated)
 
 library(GSDF)
 library(GSDF.WeatherMap)
@@ -23,13 +19,13 @@ if ( is.null(opt$month) )  { stop("Month not specified") }
 if ( is.null(opt$day) )    { stop("Day not specified") }
 if ( is.null(opt$member) ) { opt$member<-1 }
 
-Imagedir<-sprintf("%s/images/HadISST.2.2.daily.spherical",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/HadISST.2.2.daily.flat.fixed",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 Options<-WeatherMap.set.option(NULL)
 Options<-WeatherMap.set.option(Options,'land.colour',rgb(0,0,0,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'sea.colour',rgb(150,150,150,255,
+Options<-WeatherMap.set.option(Options,'sea.colour',rgb(250,250,250,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'ice.colour',rgb(255,255,255,100,
                                                        maxColorValue=255))
@@ -37,18 +33,18 @@ Options<-WeatherMap.set.option(Options,'background.resolution','high')
 
 ptions<-WeatherMap.set.option(Options,'lat.min',-90)
 Options<-WeatherMap.set.option(Options,'lat.max',90)
-Options<-WeatherMap.set.option(Options,'lon.min',-190)
-Options<-WeatherMap.set.option(Options,'lon.max',190)
-Options$vp.lon.min<- -180
-Options$vp.lon.max<- 180
+Options<-WeatherMap.set.option(Options,'lon.min',-140)
+Options<-WeatherMap.set.option(Options,'lon.max',240)
+Options$vp.lon.min<- -130
+Options$vp.lon.max<-  230
 Options$obs.size<- 0.5
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
-Options<-WeatherMap.set.option(Options,'pole.lat',35)
+Options<-WeatherMap.set.option(Options,'pole.lat',45)
 Options$ice.points<-400000
 
-cols.base<-brewer.pal(11,"RdBu")
-cols.base<-c(cols.base[1:3],"#C0C0C0",cols.base[9:11]) # Filter out the white bits
-cols<-cols.base
+cols<-colorRampPalette(brewer.pal(11,"RdBu"))(100)
+    land<-WeatherMap.get.land(Options)
+land<-GSDF:::GSDF.pad.longitude(land)
 
 set.pole<-function(step) {
   if(step<=1000) return(Options)
@@ -59,7 +55,7 @@ set.pole<-function(step) {
   Options<-WeatherMap.set.option(Options,'pole.lat',lat)
   min.lon<-((step-1000)/5)%%360-180
   Options<-WeatherMap.set.option(Options,'lon.min',min.lon-10)
-  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+370)
+  Options<-WeatherMap.set.option(Options,'lon.max',min.lon+380)
   Options<-WeatherMap.set.option(Options,'vp.lon.min',min.lon   )
   Options<-WeatherMap.set.option(Options,'vp.lon.max',min.lon+360)
   return(Options)
@@ -68,8 +64,8 @@ HadISST.get.sst.at.month<-function(year,month,day,member) {
   file<-sprintf("%s/HadISST.2.2.0.0/Realisation_%d/HadISST2_preliminary_frompentad_qxqxd_SST_and_ice_%d_%d_%04d.nc",
                 Sys.getenv('SCRATCH'),member,day,month,year)
   field<-GSDF.ncdf.load(file,'sst',
-                        time.range=ymd(sprintf("%04d-%02d-01",1800,1),
-                                       sprintf("%04d-%02d-31",2050,12)),
+                        time.range=as.chron(ymd(sprintf("%04d-%02d-01",1800,1),
+                                       sprintf("%04d-%02d-31",2050,12))),
                         lat.range=c(-90,90),lon.range=c(-180,360))
   if(month==2 && day==29) day<-28
   climf.name<-sprintf("%s/HadISST.2.2.0.0/climatology_%02d%02d.Rdata",
@@ -86,8 +82,8 @@ HadISST.get.ice.at.month<-function(year,month,day,member) {
   file<-sprintf("%s/HadISST.2.2.0.0/Realisation_%d/HadISST2_preliminary_frompentad_qxqxd_SST_and_ice_%d_%d_%04d.nc",
                 Sys.getenv('SCRATCH'),member,day,month,year)
   field<-GSDF.ncdf.load(file,'sic',
-                        time.range=ymd(sprintf("%04d-%02d-01",1800,1),
-                                       sprintf("%04d-%02d-31",2050,12)),
+                        time.range=as.chron(ymd(sprintf("%04d-%02d-01",1800,1),
+                                       sprintf("%04d-%02d-31",2050,12))),
                         lat.range=c(-90,90),lon.range=c(-180,360))
   field$meta$pole.lon<-180
   w<-which(field$data< -100)
@@ -105,7 +101,6 @@ Draw.temperature<-function(temperature,Options,Trange=5) {
   Options.local<-Options
   Options.local$fog.min.transparency<-1.0
   tplus<-temperature
-  #tplus$data[]<-pmax(0,pmin(Trange,tplus$data))/Trange
   tplus$data[]<-pmax(0,(sigmoid(tplus$data)-0.5)*2)
   Options.local$fog.colour<-c(1,0,0)
   WeatherMap.draw.fog(tplus,Options.local)
@@ -163,17 +158,14 @@ plot.field<-function(sst,ice,land,year,month,day) {
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
-    Options<-set.pole(interval(ymd("1961-01-01"),ymd(sprintf("%04d-%02d-%02d",year,month,day)))/ddays(1))
-    land<-WeatherMap.get.land(Options)
-    land<-GSDF:::GSDF.pad.longitude(land)
     
      png(ifile.name,
-             width=1080*2,
+             width=1080*16/9,
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,
              type='cairo')
-    Options$label<-sprintf("%04d-%02d",year,month)
+    Options$label<-sprintf("%04d-%02d-%02d",year,month,day)
   
   	   pushViewport(dataViewport(c(Options$vp.lon.min,Options$vp.lon.max),
   				     c(Options$lat.min,Options$lat.max),
@@ -185,6 +177,9 @@ plot.field<-function(sst,ice,land,year,month,day) {
       Draw.temperature(sst,Options,Trange=4)
       WeatherMap.draw.land(land,Options)
       bak<-Options$land.colour
+      Options$land.colour<-Options$sea.colour
+      WeatherMap.draw.label(Options)
+      Options$land.colour<-bak
     dev.off()
 }
 
