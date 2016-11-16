@@ -1,70 +1,68 @@
-#!/usr/bin/Rscript --no-save
+#!/usr/bin/env Rscript
 
-# Wind, ice, pressure, temperature and precip.
-# ERA5 data, print quality
-
+# Wind, ice, pressure, temperature and precip polyhedra.
+# Just do the rendering - use pre-calculated streamlines
+# Render just one timestep - parallelise on SPICE.
 
 library(GSDF.ERA5)
-library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(grid)
-#library(extrafont)
-#loadfonts()
+library(getopt)
 
-opt = list(
-  year = 2016,
-  month = 1,
-  day = 30,
-  hour = 12
-  )
+opt = getopt(c(
+  'year',   'y', 2, "integer",
+  'month',  'm', 2, "integer",
+  'day',    'd', 2, "integer",
+  'hour',   'h', 2, "integer"
+))
+if ( is.null(opt$year) )   { stop("Year not specified") }
+if ( is.null(opt$month) )  { stop("Month not specified") }
+if ( is.null(opt$day) )    { stop("Day not specified") }
+if ( is.null(opt$hour) )   { stop("Hour not specified") }
 
-Imagedir<-sprintf(".",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/ERA5_multivariate.ensemble.precip",Sys.getenv('SCRATCH'))
+Stream.dir<-sprintf("%s/images/ERA5_multivariate",Sys.getenv('SCRATCH'))
+if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 Options<-WeatherMap.set.option(NULL)
-Options<-WeatherMap.set.option(Options,'land.colour',rgb(180,180,180,255,
+Options<-WeatherMap.set.option(Options,'land.colour',rgb(100,100,100,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'ice.colour',rgb(225,225,225,255,
+Options<-WeatherMap.set.option(Options,'sea.colour',rgb(150,150,150,255,
                                                        maxColorValue=255))
-Options<-WeatherMap.set.option(Options,'sea.colour',rgb(220,220,220,255,
+Options<-WeatherMap.set.option(Options,'ice.colour',rgb(250,250,250,255,
                                                        maxColorValue=255))
-Options$sea.colour=rgb(80*1.5,95*1.5,107*1.5,255,
-                  maxColorValue=255)
-Options$land.colour=rgb(123,121,117,255,
-                    maxColorValue=255)
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
 Options<-WeatherMap.set.option(Options,'pole.lon',160)
 Options<-WeatherMap.set.option(Options,'pole.lat',45)
 
 Options<-WeatherMap.set.option(Options,'lat.min',-90)
 Options<-WeatherMap.set.option(Options,'lat.max',90)
-Options<-WeatherMap.set.option(Options,'lon.min',-190+50)
-Options<-WeatherMap.set.option(Options,'lon.max',190+50)
-Options$vp.lon.min<- -180+50
-Options$vp.lon.max<-  180+50
+Options<-WeatherMap.set.option(Options,'lon.min',-140)
+Options<-WeatherMap.set.option(Options,'lon.max',240)
+Options$vp.lon.min<- -130
+Options$vp.lon.max<-  230
 Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
-Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.2)
+Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.1)
 Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
-Options<-WeatherMap.set.option(Options,'wind.vector.density',0.5)
-Options<-WeatherMap.set.option(Options,'wind.vector.lwd',0.25)
+Options<-WeatherMap.set.option(Options,'wind.vector.density',1)
 Options$ice.points<-100000
-Options<-WeatherMap.set.option(Options,'precip.min.transparency',0.6)
-Options<-WeatherMap.set.option(Options,'fog.min.transparency',0.0)
 
-Options$mslp.base=0                         # Base value for anomalies
+Options$mslp.base=0                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
 Options$mslp.step=500                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
-Options$mslp.lwd=1
-Options$precip.colour=c(0,0.2,0)
+Options$mslp.lwd=1.5
+Options$precip.colour=c(0.3,0.5,0.3)
+Options$label.xp=0.995
 
-#WeatherMap.streamline.getGC<-function(value,transparency=NA,status=1,Options) {
-#   alpha<-c(10,50,150,255)[min(status,4)]
-#   return(gpar(col=rgb(25,25,25,alpha,maxColorValue=255),
-#               fill=rgb(125,125,125,alpha,maxColorValue=255),lwd=Options$wind.vector.lwd))
-#}
-#assignInNamespace("WeatherMap.streamline.getGC",WeatherMap.streamline.getGC, ns="GSDF.WeatherMap")
+WeatherMap.streamline.getGC<-function(value,transparency=NA,status=1,Options) {
+   alpha<-c(10,50,150,255)[min(status,4)]
+   return(gpar(col=rgb(125,125,125,alpha,maxColorValue=255),
+               fill=rgb(125,125,125,alpha,maxColorValue=255),lwd=Options$wind.vector.lwd))
+}
+assignInNamespace("WeatherMap.streamline.getGC",WeatherMap.streamline.getGC, ns="GSDF.WeatherMap")
 
 Draw.temperature<-function(temperature,Options,Trange=1) {
 
@@ -113,15 +111,15 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
          lwd<-1
          if(lines[[i]]$level<=Options$mslp.base) {
              lt<-1
-             lwd<-0.5
+             lwd<-1
          }
          gp<-gpar(col=rgb(colour[1],colour[2],colour[3],tp),
                              lwd=Options$mslp.lwd*lwd,lty=lt)
          res<-tryCatch({
-	     grid.xspline(x=unit(lines[[i]]$x,'native'),
-			y=unit(lines[[i]]$y,'native'),
-			shape=1,
-			gp=gp)
+             grid.xspline(x=unit(lines[[i]]$x,'native'),
+                        y=unit(lines[[i]]$y,'native'),
+                        shape=1,
+                        gp=gp)
              }, warning = function(w) {
                  print(w)
              }, error = function(e) {
@@ -137,7 +135,7 @@ get.streamlines<-function(year,month,day,hour) {
 
 
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
-                           Imagedir,year,month,day,hour)
+                           Stream.dir,year,month,day,hour)
     if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
        load(sf.name)
        return(s)
@@ -150,9 +148,10 @@ get.streamlines<-function(year,month,day,hour) {
 
 plot.hour<-function(year,month,day,hour,streamlines) {
 
-    image.name<-sprintf("%04d-%02d-%02d:%02d.pdf",year,month,day,hour)
+    image.name<-sprintf("%04d-%02d-%02d:%02d.png",year,month,day,hour)
 
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
+    if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
 
     land<-WeatherMap.get.land(Options)
     
@@ -167,13 +166,16 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     icec<-ERA5.get.slice.at.hour('icec',year,month,day,hour)
     prate<-ERA5.get.slice.at.hour('prate',year,month,day,hour)
     prate$data[]<-prate$data/3
-     pdf(ifile.name,
-             width=20*16/9,
-             height=20,
+    prate.ensemble<-ERA5.get.members.slice.at.hour('prate',year,month,day,hour)
+    prate.ensemble$data[]<-prate.ensemble$data/3
+  
+     png(ifile.name,
+             width=1080*16/9,
+             height=1080,
              bg=Options$sea.colour,
-	     family='Helvetica',
-             pointsize=24)
-  base.gp<-gpar(fontfamily='Helvetica',fontface='bold',col='black')
+             pointsize=24,
+             type='cairo')
+  base.gp<-gpar(family='Helvetica',font=1,col='black')
   lon.min<-Options$lon.min
   if(!is.null(Options$vp.lon.min)) lon.min<-Options$vp.lon.min
   lon.max<-Options$lon.max
@@ -189,11 +191,22 @@ plot.hour<-function(year,month,day,hour,streamlines) {
       WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
       WeatherMap.draw.land(land,Options)
       WeatherMap.draw.streamlines(streamlines,Options)
-       Draw.temperature(t2m,Options,Trange=100)
+       Draw.temperature(t2m,Options,Trange=10)
+       #Options$precip.threshold<-Options$precip.threshold/10
+       #Options$precip.range<-Options$precip.range*10
+       Options$precip.min.transparency=0.1
+       Options$precip.colour=c(0.3,0.5,0.3)
+       for(e in seq(0,9)) {
+          p<-GSDF.select.from.1d(prate.ensemble,'ensemble',e+1)
+          WeatherMap.draw.precipitation(p,Options)
+       }
+       #Options$precip.threshold<-Options$precip.threshold*10
+       #Options$precip.range<-Options$precip.range/10
+       Options$precip.min.transparency=0.95
+       Options$precip.colour=c(0,0.2,0)
        WeatherMap.draw.precipitation(prate,Options)
     Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
-    Options$label=sprintf("%04d/%02d/%02d:%02d",year,month,day,hour)
-    Options<-WeatherMap.set.option(Options,'land.colour',Options$sea.colour)
+    Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,hour)
     WeatherMap.draw.label(Options)
     dev.off()
 }
@@ -201,7 +214,4 @@ plot.hour<-function(year,month,day,hour,streamlines) {
 # Use pre-calculated streamlines
 s<-get.streamlines(opt$year,opt$month,opt$day,opt$hour)
 plot.hour(opt$year,opt$month,opt$day,opt$hour,s)
-image.name<-sprintf("%04d-%02d-%02d:%02d.pdf",
-                    opt$year,opt$month,opt$day,opt$hour)
-ifile.name<-sprintf("%s/%s",Imagedir,image.name)
-#embed_fonts(ifile.name)
+

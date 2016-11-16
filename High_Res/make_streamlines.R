@@ -39,8 +39,10 @@ Options$ice.points<-100000
     uwnd<-ERA5.get.slice.at.hour('uwnd.10m',year,month,day,hour)
     vwnd<-ERA5.get.slice.at.hour('vwnd.10m',year,month,day,hour)
     t.actual<-ERA5.get.slice.at.hour('air.2m',year,month,day,hour)
-    t.normal<-t.actual
-    t.normal$data[]<-rep(286,length(t.normal$data))
+    t.normal<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/air.2m.%02d.Rdata",
+                           Sys.getenv('SCRATCH'),hour))
+    #t.normal<-t.actual
+    #t.normal$data[]<-rep(286,length(t.normal$data))
     s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
     s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
     s<-WeatherMap.make.streamlines(s,uwnd,vwnd,t.actual,t.normal,Options)
