@@ -13,7 +13,7 @@ opt = getopt(c(
   'year',   'y', 2, "integer",
   'month',  'm', 2, "integer",
   'day',    'd', 2, "integer",
-  'hour',   'h', 2, "integer"
+  'hour',   'h', 2, "numeric"
 ))
 if ( is.null(opt$year) )   { stop("Year not specified") }
 if ( is.null(opt$month) )  { stop("Month not specified") }
@@ -135,9 +135,19 @@ get.streamlines<-function(year,month,day,hour) {
 
 
     sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
-                           Stream.dir,year,month,day,hour)
+                           Stream.dir,year,month,day,as.integer(hour))
     if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
        load(sf.name)
+       hour.fraction<-hour-as.integer(hour)
+       # Fudge the streamlines for the fractional hour
+       if(hour.fraction>0) {
+          move.scale<-0.033*Options$wind.vector.points/Options$wind.vector.scale
+          move.scale<-move.scale*Options$wind.vector.move.scale*view.scale
+          for(p in seq(1,Options$wind.vector.points)) {
+           s[['x']][,p]<-s[['x']][,p]+(s[['x']][,2]-s[['x']][,1])*move.scale*hour.fraction
+           s[['y']][,p]<-s[['y']][,p]+(s[['y']][,2]-s[['y']][,1])*move.scale*hour.fraction
+         }
+       }
        return(s)
     } else {
       stop(sprintf("No streamlines available for %04d-%02d-%02d:%02d",
@@ -148,7 +158,8 @@ get.streamlines<-function(year,month,day,hour) {
 
 plot.hour<-function(year,month,day,hour,streamlines) {
 
-    image.name<-sprintf("%04d-%02d-%02d:%02d.png",year,month,day,hour)
+    image.name<-sprintf("%04d-%02d-%02d:%02d.%02d.png",year,month,day,as.integer(hour),
+                        as.integer((hour%%1)*100))
 
     ifile.name<-sprintf("%s/%s",Imagedir,image.name)
     if(file.exists(ifile.name) && file.info(ifile.name)$size>0) return()
@@ -156,12 +167,25 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     land<-WeatherMap.get.land(Options)
     
     t2m<-ERA5.get.slice.at.hour('air.2m',year,month,day,hour)
+    hour.fraction<-hour%%1
     t2n<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/air.2m.%02d.Rdata",
-                           Sys.getenv('SCRATCH'),hour))
+                           Sys.getenv('SCRATCH'),as.integer(hour)))
+    if(hour.fraction>0) {
+      yp<-ymd_hms(sprintf("%04d-%02d-%02d:%02d:00:00",year,month,day,as.integer(hour)))+hours(1)
+      t2n2<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/air.2m.%02d.Rdata",
+                           Sys.getenv('SCRATCH'),lubridate::hour(yp)))
+      t2n$data[]<-t2n$data*(1-hour.fraction)+t2n2$data*hour.fraction
+    }
     t2m$data[]<-t2m$data-t2n$data
     prmsl.T<-ERA5.get.slice.at.hour('prmsl',year,month,day,hour)
     prn<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/prmsl.%02d.Rdata",
-                           Sys.getenv('SCRATCH'),hour))
+                           Sys.getenv('SCRATCH'),as.integer(hour)))
+    if(hour.fraction>0) {
+      yp<-ymd_hms(sprintf("%04d-%02d-%02d:%02d:00:00",year,month,day,as.integer(hour)))+hours(1)
+      prn2<-readRDS(sprintf("%s/ERA5/oper/climtologies.test/prmsl.%02d.Rdata",
+                           Sys.getenv('SCRATCH'),lubridate::hour(yp)))
+      prn$data[]<-prn$data*(1-hour.fraction)+prn2$data*hour.fraction
+    }
     prmsl.T$data[]<-prmsl.T$data-prn$data
     icec<-ERA5.get.slice.at.hour('icec',year,month,day,hour)
     prate<-ERA5.get.slice.at.hour('prate',year,month,day,hour)
@@ -195,7 +219,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
        #Options$precip.threshold<-Options$precip.threshold/10
        #Options$precip.range<-Options$precip.range*10
        Options$precip.min.transparency=0.1
-       Options$precip.colour=c(0.3,0.5,0.3)
+       Options$precip.colour=c(0.4,0.5,0.4)
        for(e in seq(0,9)) {
           p<-GSDF.select.from.1d(prate.ensemble,'ensemble',e+1)
           WeatherMap.draw.precipitation(p,Options)
@@ -206,7 +230,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
        Options$precip.colour=c(0,0.2,0)
        WeatherMap.draw.precipitation(prate,Options)
     Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
-    Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,hour)
+    Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
     WeatherMap.draw.label(Options)
     dev.off()
 }

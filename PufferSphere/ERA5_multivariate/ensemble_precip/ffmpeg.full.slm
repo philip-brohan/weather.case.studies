@@ -7,7 +7,7 @@
 
 cd $SCRATCH/images
 
-rm ERA5_multivariate.ensemble.precipmp4
+rm ERA5_multivariate.ensemble.precip.mp4
 # Get rid of empty images - they make ffmpeg stop processing
 #  These usually come from disc problems in the creation step.
 find ERA5_multivariate.ensemble.precip/*.png -type f -empty -delete
