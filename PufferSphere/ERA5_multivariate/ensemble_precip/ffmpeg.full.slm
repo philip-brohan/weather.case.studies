@@ -12,4 +12,4 @@ rm ERA5_multivariate.ensemble.precip.mp4
 #  These usually come from disc problems in the creation step.
 find ERA5_multivariate.ensemble.precip/*.png -type f -empty -delete
 
-ffmpeg -r 24 -pattern_type glob -i ERA5_multivariate.ensemble.precip/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy ERA5_multivariate.ensemble.precip.mp4
+ffmpeg -r 48 -pattern_type glob -i ERA5_multivariate.ensemble.precip/\*.png -c:v libx264 -threads 16 -preset slow -tune animation -profile:v high -level 4.2 -pix_fmt yuv420p -crf 22 -c:a copy ERA5_multivariate.ensemble.precip.mp4
