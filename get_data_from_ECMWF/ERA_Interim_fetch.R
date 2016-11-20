@@ -21,7 +21,7 @@ local.dir<-sprintf("%s/ERA_Interim",Sys.getenv('SCRATCH'))
 vars.a<-list(air.2m   = '167.128',
            uwnd.10m = '165.128',
 	   vwnd.10m = '166.128',
-	   mslp     = '151',
+	   prmsl    = '151',
 	   icec     = '31',
 	   sst      = '34')
 
@@ -47,7 +47,7 @@ get.surface.analysis<-function(var) {
  cat('   \'time\'      : "00/06/12/18",\n')
  cat(sprintf("   'date'      : \"%04d-%02d-%02d/to/%04d-%02d-%02d\",\n",
                                opt$year,opt$month,1,
-			       opt$year,opt$month,days_in_month(ymd(sprintf("%04d-$02d-01",opt$year,opt$month)))))
+			       opt$year,opt$month,days_in_month(ymd(sprintf("%04d-%02d-01",opt$year,opt$month)))))
  cat('   \'format\'    : "netcdf",\n')
  cat(sprintf("   'target'    : \"%s\",\n",target.file))
  cat('})')
@@ -80,7 +80,7 @@ get.surface.forecast<-function(var) {
  cat('   \'time\'      : "00/12",\n')
  cat(sprintf("   'date'      : \"%04d-%02d-%02d/to/%04d-%02d-%02d\",\n",
                                opt$year,opt$month,1,
-			       opt$year,opt$month,days_in_month(ymd(sprintf("%04d-$02d-01",opt$year,opt$month)))))
+			       opt$year,opt$month,days_in_month(ymd(sprintf("%04d-%02d-01",opt$year,opt$month)))))
  cat('   \'format\'    : "netcdf",\n')
  cat(sprintf("   'target'    : \"%s\",\n",target.file))
  cat('})')
