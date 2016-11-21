@@ -188,9 +188,9 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     }
     prmsl.T$data[]<-prmsl.T$data-prn$data
     icec<-ERA5.get.slice.at.hour('icec',year,month,day,hour)
-    prate<-ERA5.get.slice.at.hour('prate',year,month,day,hour)
+    prate<-ERA5.get.slice.at.hour('prate',year,month,day,hour,fc.init='blend')
     prate$data[]<-prate$data/3
-    prate.ensemble<-ERA5.get.members.slice.at.hour('prate',year,month,day,hour)
+    prate.ensemble<-ERA5.get.members.slice.at.hour('prate',year,month,day,hour,fc.init='blend')
     prate.ensemble$data[]<-prate.ensemble$data/3
   
      png(ifile.name,

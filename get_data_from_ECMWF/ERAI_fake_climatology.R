@@ -4,7 +4,7 @@
 library(GSDF.ERAI)
 library(lubridate)
 
-var<-'air.2m'
+var<-'prmsl'
 
 for(hour in seq(0,23)) {
 

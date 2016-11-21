@@ -2,7 +2,7 @@
 
 library(lubridate)
 
-Imagedir<-sprintf("%s/images//ERA5_multivariate.blended",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images//ERAI_multivariate",Sys.getenv('SCRATCH'))
 
 current.day<-ymd("2016-01-03")
 end.day<-ymd("2016-02-28")

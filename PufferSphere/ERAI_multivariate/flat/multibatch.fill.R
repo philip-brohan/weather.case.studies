@@ -1,16 +1,24 @@
 # Run a load of rendering jobs on SPICE - keeping no more than 1000
 #  in the queue at once.
+# Repeat failed calculations.
 
 library(lubridate)
 
-current.day<-ymd("2016-02-10")
+Imagedir<-sprintf("%s/images//ERAI_multivariate",Sys.getenv('SCRATCH'))
+
+current.day<-ymd("2016-01-03")
 end.day<-ymd("2016-02-28")
 
 while(current.day<=end.day) {
-  in.system<-system('squeue --user hadpb',intern=TRUE)
-  n.new.jobs<-1000-length(in.system)
-  if(n.new.jobs>100) {
-      for(hour in seq(0,23.75,0.25)) {
+     for(hour in seq(0,23.75,0.25)) {
+        
+      file.name<-sprintf("%s/%04d-%02d-%02d:%02d.%02d.png",
+                         Imagedir,year(current.day),
+                         month(current.day),
+                         day(current.day),as.integer(hour),
+                         as.integer(hour%%1*100))
+      if(!file.exists(file.name) || file.info(file.name)$size==0) {
+          print(file.name)
           sink('multistart.step.slm')
           cat('#!/bin/ksh -l\n')
           cat('#SBATCH --output=/scratch/hadpb/slurm_output/ERA5_multivariate-%j.out\n')
@@ -24,7 +32,7 @@ while(current.day<=end.day) {
           sink()
           system('sbatch multistart.step.slm')
       }
-      current.day<-current.day+days(1)
-  }
+    }
+  current.day<-current.day+days(1)
   if(current.day<=end.day) Sys.sleep(2)
 }

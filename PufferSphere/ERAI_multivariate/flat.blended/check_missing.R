@@ -5,7 +5,7 @@ library(lubridate)
 Imagedir<-sprintf("%s/images//ERAI_multivariate.blended",Sys.getenv('SCRATCH'))
 
 current.day<-ymd("2016-01-03")
-end.day<-ymd("2016-02-10")
+end.day<-ymd("2016-02-28")
 
 while(current.day<=end.day) {
   for(hour in seq(0,23)) {
