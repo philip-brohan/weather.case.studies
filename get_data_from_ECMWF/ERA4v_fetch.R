@@ -27,7 +27,7 @@ get.surface.forecast<-function(var) {
  if(!file.exists(target.dir)) dir.create(target.dir,recursive=TRUE)
  for(start.hour in c(9,21)) {
      target.file<-(sprintf("%s/%s.%02d.nc",target.dir,var,start.hour))
-     if(file.exists(target.file) && file.info(target.file)$size>0) return() # already done
+     if(file.exists(target.file) && file.info(target.file)$size>0) next # already done
      sink(fname)
      cat('#!/usr/bin/env python\n')
      cat('from ecmwfapi import ECMWFDataServer\n')
