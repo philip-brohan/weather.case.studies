@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # Make climatologies for each day and hour from ERAI data
 #  by averaging over 1981-2010.
 
@@ -12,7 +14,7 @@ opt = getopt(c(
   'hour',   'h', 2, "integer"
 ))
 
-make.clim<-function(month,day,hour) {
+make.clim<-function(var,month,day,hour) {
            c<-ERAI.get.slice.at.hour(var,1981,month,day,hour)
            for(year in seq(1982,2010)) {
              d<-ERAI.get.slice.at.hour(var,year,month,day,hour)
@@ -23,3 +25,4 @@ make.clim<-function(month,day,hour) {
                              Sys.getenv("SCRATCH"),var,month,day,hour))
 } 
 
+make.clim(opt$var,opt$month,opt$day,opt$hour)
