@@ -46,7 +46,7 @@ Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.2)
 Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
 Options<-WeatherMap.set.option(Options,'wind.vector.density',0.5)
 Options<-WeatherMap.set.option(Options,'wind.vector.lwd',1.5)
-Options$ice.points<-100000
+Options$ice.points<-1000000
 Options<-WeatherMap.set.option(Options,'precip.min.transparency',0.9)
 Options<-WeatherMap.set.option(Options,'fog.min.transparency',0.0)
 
@@ -72,6 +72,12 @@ orog<-GSDF.ncdf.load(sprintf("%s/ERA5/oper/fixed_geopotential.nc",Sys.getenv('SC
                              lat.range=c(-90,90),lon.range=c(0,360))
 w<-which(lsm$data==0)
 is.na(orog$data[w])<-TRUE
+   l2<-orog
+   l2$dimensions[[1]]$values<-seq(0,359.875,0.125)
+   l2$dimensions[[2]]$values<-seq(90,-90,-0.125)
+   l2$data<-array(dim=c(length(l2$dimensions[[1]]$values),
+                        length(l2$dimensions[[1]]$values),1))
+   orog<-GSDF.regrid.2d(orog,l2)
 
 draw.land<-function(Options,n.levels=20) {
    land<-GSDF.WeatherMap:::WeatherMap.rotate.pole(GSDF:::GSDF.pad.longitude(orog),Options)
@@ -79,25 +85,23 @@ draw.land<-function(Options,n.levels=20) {
    qtls<-quantile(land$data,probs=seq(0,1,1/n.levels),na.rm=TRUE)
    base.colour<-col2rgb(Options$land.colour)/255
    peak.colour<-c(.8,.8,.8)
+   plot.colours<-rep(rgb(0,0,0,0),length(land$data))
    for(level in seq_along(qtls)) {
       if(level==1) next
       fraction<-1-(level-1)/n.levels
       plot.colour<-base.colour*fraction+peak.colour*(1-fraction)
       plot.colour<-rgb(plot.colour[1],plot.colour[2],plot.colour[3])
-      plot.colours<-rep(rgb(0,0,0,0),length(land$data))
       w<-which(land$data>=qtls[level-1] & land$data<=qtls[level])
       plot.colours[w]<-plot.colour
+      }
       m<-matrix(plot.colours, ncol=length(lons), byrow=T)
-      # flip the data order up<->down to be right for an image
-      #m<-apply(m,2,rev)
       r.w<-max(lons)-min(lons)+(lons[2]-lons[1])
       r.c<-(max(lons)+min(lons))/2
       grid.raster(m,,
                    x=unit(r.c,'native'),
                    y=unit(0,'native'),
                    width=unit(r.w,'native'),
-                   height=unit(180,'native'))
-   }   
+                   height=unit(180,'native'))  
 }
  
 Draw.temperature<-function(temperature,Options,Trange=1) {
