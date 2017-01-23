@@ -25,7 +25,7 @@ if ( is.null(opt$version) ){ opt$version='3.5.4' }
 member=1
 fog.threshold<-exp(2)
 
-Imagedir<-sprintf("%s/images/TWCR_multivariate",Sys.getenv('SCRATCH'))
+Imagedir<-sprintf("%s/images/TWCR_multivariate.tst",Sys.getenv('SCRATCH'))
 Stream.dir<-sprintf("%s/images/TWCR_multivariate",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
@@ -171,7 +171,7 @@ get.streamlines<-function(year,month,day,hour) {
        return(s)
     } else {
       stop(sprintf("No streamlines available for %04d-%02d-%02d:%02d",
-                   year,month,day,hour))
+                   year,month,day,as.integer(hour)))
     }
 
 }
@@ -191,6 +191,8 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     t2n<-GSDF.regrid.2d(t2n,t2m)
     t2m$data[]<-t2m$data-t2n$data
     prmsl.T<-get.member.at.hour('prmsl',year,month,day,hour,member,version=opt$version)
+    prm<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,type='mean',version=opt$version)
+    prm<-GSDF.regrid.2d(prm,prmsl.T)
     prn<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,type='normal',version='3.4.1')
     prn<-GSDF.regrid.2d(prn,prmsl.T)
     prmsl.spread<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version=opt$version,
@@ -199,7 +201,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     prmsl.sd<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,
                                          version='3.4.1',type='standard.deviation')
     prmsl.sd<-GSDF.regrid.2d(prmsl.sd,prmsl.T)
-    fog<-TWCR.relative.entropy(prn,prmsl.sd,prmsl.T,prmsl.spread)
+    fog<-TWCR.relative.entropy(prn,prmsl.sd,prm,prmsl.spread)
     fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
     #w<-which(fog$data<fog.threshold)
     #fog$data[w]<-1

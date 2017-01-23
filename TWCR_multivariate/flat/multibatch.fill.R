@@ -10,8 +10,8 @@ current.day<-ymd("1915-01-01")
 end.day<-ymd("1915-02-28")
 
 while(current.day<=end.day) {
+      while(length(system('squeue --user hadpb',intern=TRUE))>900)  Sys.sleep(10)
      for(hour in seq(0,23.75,0.25)) {
-        
       file.name<-sprintf("%s/%04d-%02d-%02d:%02d.%02d.png",
                          Imagedir,year(current.day),
                          month(current.day),
@@ -27,12 +27,11 @@ while(current.day<=end.day) {
           cat('#SBATCH --ntasks=1\n')
           cat('#SBATCH --ntasks-per-core=2\n')
           cat('#SBATCH --time=5\n')
-             cat(sprintf("./full_single.R --year=%d --month=%d --day=%d --hour=%f\n",
+             cat(sprintf("time ./full_single.R --year=%d --month=%d --day=%d --hour=%f\n",
                          year(current.day),month(current.day),day(current.day),hour))
           sink()
           system('sbatch multistart.step.slm')
       }
     }
   current.day<-current.day+days(1)
-  if(current.day<=end.day) Sys.sleep(2)
 }

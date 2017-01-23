@@ -13,13 +13,13 @@ while(current.day<=end.day) {
       for(hour in seq(0,23.75,0.25)) {
           sink('multistart.step.slm')
           cat('#!/bin/ksh -l\n')
-          cat('#SBATCH --output=/scratch/hadpb/slurm_output/TWCR_multivariate-%j.out\n')
+          cat('#SBATCH --output=/scratch/hadpb/slurm_output/TWCR_multivariate.tst-%j.out\n')
           cat('#SBATCH --qos=normal\n')
           cat('#SBATCH --mem=5000\n')
           cat('#SBATCH --ntasks=1\n')
           cat('#SBATCH --ntasks-per-core=2\n')
           cat('#SBATCH --time=5\n')
-             cat(sprintf("./full_single.R --year=%d --month=%d --day=%d --hour=%f\n",
+             cat(sprintf("time ./full_single.R --year=%d --month=%d --day=%d --hour=%f\n",
                          year(current.day),month(current.day),day(current.day),hour))
           sink()
           system('sbatch multistart.step.slm')

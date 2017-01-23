@@ -29,7 +29,7 @@ Options<-WeatherMap.set.option(Options,'sea.colour',rgb(100,100,100,255,
 Options<-WeatherMap.set.option(Options,'ice.colour',Options$land.colour)
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
 
-ptions<-WeatherMap.set.option(Options,'lat.min',-90)
+Options<-WeatherMap.set.option(Options,'lat.min',-90)
 Options<-WeatherMap.set.option(Options,'lat.max',90)
 Options<-WeatherMap.set.option(Options,'lon.min',-140)
 Options<-WeatherMap.set.option(Options,'lon.max',240)

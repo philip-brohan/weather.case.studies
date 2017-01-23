@@ -223,3 +223,6 @@ if(opt$observations==TRUE) {
     }
 }  
 
+# set permissions for all to read
+cmd<-sprintf("chmod -R a+xR %s",local.dir)
+system(cmd)
