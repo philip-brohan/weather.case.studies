@@ -78,7 +78,7 @@ get.members<-function(var) {
     remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis_version2c_ensemble/"
  }
  if(opt$version=='3.2.1') {
-    remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis__ensemble/"
+    remote.dir<-"pbrohan@dtn02.nersc.gov:/project/projectdirs/20C_Reanalysis/www/20C_Reanalysis_ensemble/"
  }  
  local.file<-sprintf("%s/ensembles/hourly/%s/%s.%04d.nc",local.dir,var,var,opt$year)
  if(!file.exists(dirname(local.file))) dir.create(dirname(local.file),recursive=TRUE)

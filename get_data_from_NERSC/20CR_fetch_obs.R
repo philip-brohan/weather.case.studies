@@ -6,7 +6,7 @@
 library(getopt)
 library(parallel)
 
-version<-'3.5.1'
+version<-'3.2.1'
 
 local.dir<-sprintf("%s/20CR/version_%s",Sys.getenv('SCRATCH'),version)
 
@@ -24,7 +24,7 @@ get.observations<-function() {
    return(TRUE)
 }
 opt<-list()
-for(year in seq(1853,2014)) {
+for(year in seq(1875,2010)) {
   opt$year<-year
    get.result<-get.observations()
        w<-which(get.result!=TRUE)

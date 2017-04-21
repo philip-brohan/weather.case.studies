@@ -2,12 +2,12 @@
 
 library(lubridate)
 
-var<-'air.2m'
+var<-'prmsl'
 
 base.year<-1981
 for(month in seq(1,12)) {
   dim<-days_in_month(ymd(sprintf("%04d-%02d-10",base.year,month)))
-   for(day in seq(dim,dim)) {
+   for(day in seq(1,dim)) {
       sink('multistart.step.slm')
       cat('#!/bin/ksh -l\n')
       cat('#SBATCH --output=/scratch/hadpb/slurm_output/ERAI_climatology-%j.out\n')
