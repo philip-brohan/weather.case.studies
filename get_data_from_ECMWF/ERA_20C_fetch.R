@@ -41,7 +41,7 @@ get.surface.analysis<-function(var) {
  cat('   \'class\'     : "ei",\n')
  cat('   \'levtype\'   : "sfc",\n')
  cat(sprintf("   \'param\'     : \"%s\",\n",vars.a[[var]]))
- cat('   \'grid\'      : "2/2",\n')
+ cat('   \'grid\'      : "1.25/1.25",\n')
  cat('   \'time\'      : "00/03/06/09/12/15/18/21",\n')
  cat(sprintf("   'date'      : \"%04d-%02d-%02d/to/%04d-%02d-%02d\",\n",
                                opt$year,opt$month,1,
@@ -75,7 +75,7 @@ get.surface.forecast<-function(var) {
  cat('   \'class\'     : "ei",\n')
  cat('   \'levtype\'   : "sfc",\n')
  cat(sprintf("   \'param\'     : \"%s\",\n",vars.f[[var]]))
- cat('   \'grid\'      : "2/2",\n')
+ cat('   \'grid\'      : "1.25/1.25",\n')
  cat(sprintf("   \'time\'      : \"%02d\",\n",6))
  cat(sprintf("   'date'      : \"%04d-%02d-%02d/to/%04d-%02d-%02d\",\n",
                                opt$year,opt$month,1,
@@ -102,7 +102,7 @@ get.surface.forecast<-function(var) {
  cat('   \'class\'     : "ei",\n')
  cat('   \'levtype\'   : "sfc",\n')
  cat(sprintf("   \'param\'     : \"%s\",\n",vars.f[[var]]))
- cat('   \'grid\'      : "2/2",\n')
+ cat('   \'grid\'      : "1.25/1.25",\n')
  cat(sprintf("   \'time\'      : \"%02d\",\n",6))
  cat(sprintf("   'date'      : \"%04d-%02d-%02d/to/%04d-%02d-%02d\",\n",
                                opt$year,opt$month,1,

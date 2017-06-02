@@ -57,7 +57,7 @@ get.result<-mclapply(vars,get.base,mc.cores=6)
 w<-which(get.result!=TRUE)
 if(length(w)>0) {
   for(i in w) print(get.result[[i]])
-  stop("Base download failed")
+   warning("Base download failed")
 }
 
 # Extended set
@@ -67,7 +67,7 @@ if(opt$extended==TRUE) {
     w<-which(get.result!=TRUE)
     if(length(w)>0) {
       for(i in w) print(get.result[[i]])
-      stop("Extended download failed")
+      warning("Extended download failed")
     }
 }
 
