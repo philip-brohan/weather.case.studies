@@ -8,9 +8,9 @@ library(chron)
 
 Year<-1987
 Month<-10
-Day<-14
+Day<-13
 Hour<-0
-n.total<-4*24
+n.total<-5*24*4
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
           times=sprintf("%02d:00:00",Hour),
@@ -35,7 +35,7 @@ Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
 Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.5)
-Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',10)
+Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',30/4)
 Options<-WeatherMap.set.option(Options,'wind.vector.density',1.5)
 
 Options$ice.points<-100000
@@ -43,13 +43,15 @@ Options$ice.points<-100000
 
 make.streamlines<-function(year,month,day,hour,Options,streamlines=NULL) {
 
-    sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
-                           Imagedir,year,month,day,hour)
+    sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d:%02d.rd",
+                           Imagedir,year,month,day,as.integer(hour),
+                           as.integer((hour%%1)*60))
     if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
        load(sf.name)
        return(s)
     }
-    print(sprintf("%04d-%02d-%02d:%02d - %s",year,month,day,hour,
+    print(sprintf("%04d-%02d-%02d:%02d:%02d - %s",year,month,day,as.integer(hour),
+                           as.integer((hour%%1)*60),
                    Sys.time()))
 
     uwnd<-ERAI.get.slice.at.hour('uwnd.10m',year,month,day,hour)
@@ -68,11 +70,11 @@ make.streamlines<-function(year,month,day,hour,Options,streamlines=NULL) {
 s<-NULL
 for(n.count in seq(1,n.total)) {
 
-    n.date<-c.date+n.count/24
+    n.date<-c.date+n.count/(24*4)
     year<-as.numeric(as.character(chron::years(n.date)))
     month<-months(n.date)
     day<-chron::days(n.date)
-    hour<-(n.count+Hour)%%24
+    hour<-(n.count/4+Hour)%%24
 
     # serial component - streamlines evolve from hour to hour
     s<-make.streamlines(year,month,day,hour,Options,streamlines=s)

@@ -5,7 +5,7 @@
 # Render just one timestep - parallelise on SPICE.
 # Sub-hourly version - fudge streamlines
 
-library(GSDF.ERAI)
+library(GSDF.TWCR)
 library(GSDF.WeatherMap)
 library(grid)
 library(getopt)
@@ -14,15 +14,22 @@ opt = getopt(c(
   'year',   'y', 2, "integer",
   'month',  'm', 2, "integer",
   'day',    'd', 2, "integer",
-  'hour',   'h', 2, "numeric"
+  'hour',   'h', 2, "numeric",
+  'version','v', 2, "character"
 ))
 if ( is.null(opt$year) )   { stop("Year not specified") }
 if ( is.null(opt$month) )  { stop("Month not specified") }
 if ( is.null(opt$day) )    { stop("Day not specified") }
 if ( is.null(opt$hour) )   { stop("Hour not specified") }
+if ( is.null(opt$version) ){ opt$version='4.1.8' }
+member=1
+fog.threshold<-exp(1)
 
-Imagedir<-sprintf("%s/images/ERAI_multivariate.1987",Sys.getenv('SCRATCH'))
-Stream.dir<-sprintf("%s/images/ERAI_multivariate.1987",Sys.getenv('SCRATCH'))
+# Fudge for using the V2 climatology
+air.2m.clim.correct<-readRDS('/scratch/hadpb/20CR/version_4.0.0/air.2m.normals.correction.Rdata')
+
+Imagedir<-sprintf("%s/images/TWCR_multivariate.V3",Sys.getenv('SCRATCH'))
+Stream.dir<-sprintf("%s/images/TWCR_multivariate.V3",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
 Options<-WeatherMap.set.option(NULL)
@@ -33,60 +40,94 @@ Options<-WeatherMap.set.option(Options,'sea.colour',rgb(150,150,150,255,
 Options<-WeatherMap.set.option(Options,'ice.colour',rgb(250,250,250,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'background.resolution','high')
-range<-15
-aspect<-4/3
-Options<-WeatherMap.set.option(Options,'lat.min',range*-1)
-Options<-WeatherMap.set.option(Options,'lat.max',range)
-Options<-WeatherMap.set.option(Options,'lon.min',range*aspect*-1)
-Options<-WeatherMap.set.option(Options,'lon.max',range*aspect)
-Options<-WeatherMap.set.option(Options,'pole.lon',173)
-Options<-WeatherMap.set.option(Options,'pole.lat',36)
+Options<-WeatherMap.set.option(Options,'pole.lon',160)
+Options<-WeatherMap.set.option(Options,'pole.lat',45)
+
+Options<-WeatherMap.set.option(Options,'lat.min',-90)
+Options<-WeatherMap.set.option(Options,'lat.max',90)
+Options<-WeatherMap.set.option(Options,'lon.min',-140)
+Options<-WeatherMap.set.option(Options,'lon.max',240)
+Options$vp.lon.min<- -130
+Options$vp.lon.max<-  230
 Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 
 Options<-WeatherMap.set.option(Options,'wind.vector.points',3)
-Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.5)
-Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',30/4)
-Options<-WeatherMap.set.option(Options,'wind.vector.density',1.5)
+Options<-WeatherMap.set.option(Options,'wind.vector.scale',0.1)
+Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
+Options<-WeatherMap.set.option(Options,'wind.vector.density',1)
 Options$ice.points<-100000
 
+Options<-WeatherMap.set.option(Options,'obs.size',1.0)
+Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
+                                                       maxColorValue=255))
+Options<-WeatherMap.set.option(Options,'fog.colour',c(0.65,0.65,0.65))
+Options<-WeatherMap.set.option(Options,'fog.min.transparency',0.95)
+
 Options$mslp.base=101325                    # Base value for anomalies
-Options$mslp.range=100000                    # Anomaly for max contour
-Options$mslp.step=300                       # Smaller -> more contours
+Options$mslp.range=50000                    # Anomaly for max contour
+Options$mslp.step=500                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
 Options$mslp.lwd=1
 Options$precip.colour=c(0,0.2,0)
 Options$label.xp=0.995
 
-# Load the 0.25 degree orography
-orog<-GSDF.ncdf.load(sprintf("%s/orography/elev.0.25-deg.nc",Sys.getenv('SCRATCH')),'data',
-                             lat.range=c(-90,90),lon.range=c(-180,360))
-orog<-GSDF.select.from.1d(orog,'time',1)
-orog$data[orog$data<0]<-0 # sea-surface, not sea-bottom
-is.na(orog$data[orog$data==0])<-TRUE
-# 1-km orography (slow, needs lots of ram) - only load a slice
-if(TRUE) {
-    orog<-GSDF.ncdf.load(sprintf("%s/orography/ETOPO2v2c_ud_rl.nc",Sys.getenv('SCRATCH')),'z',
-                                 lat.range=c(-90,90),lon.range=c(0,360))
-    orog$data[orog$data<0]<-0 # sea-surface, not sea-bottom
-    is.na(orog$data[orog$data==0])<-TRUE
+get.V3.normal<-function(variable,year,month,day,hour) {
+  if(variable != 'air.2m') stop('Only air.2m climatology available')
+  n<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,type='normal',version='3.4.1')
+  adj<-air.2m.clim.correct[['00']]
+  n<-GSDF.regrid.2d(n,adj)
+  if(hour==0) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['00']]$data)
+    return(n)
+  }
+  if(hour<6) {
+    weight<-(hour)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['06']]$data)*weight +
+              as.vector(air.2m.clim.correct[['00']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==6) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['06']]$data)
+    return(n)
+  }
+  if(hour<12) {
+    weight<-(hour-6)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['12']]$data)*weight +
+              as.vector(air.2m.clim.correct[['06']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==12) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['12']]$data)
+    return(n)
+  }
+  if(hour<18) {
+    weight<-(hour-12)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['18']]$data)*weight +
+              as.vector(air.2m.clim.correct[['12']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==18) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['18']]$data)
+    return(n)
+  }
+  weight<-(hour-18)/6
+  n$data[]<-n$data +
+            as.vector(air.2m.clim.correct[['00']]$data)*weight +
+            as.vector(air.2m.clim.correct[['18']]$data)*(1-weight)
+  return(n)
 }
-# Plot the orography - raster background, fast
-draw.land.flat<-function(Options) {
-   land<-GSDF.WeatherMap:::WeatherMap.rotate.pole(GSDF:::GSDF.pad.longitude(orog),Options)
-   lons<-land$dimensions[[GSDF.find.dimension(land,'lon')]]$values
-   base.colour<-Options$land.colour
-   plot.colours<-rep(rgb(0,0,0,0),length(land$data))
-      w<-which(land$data>0)
-      plot.colours[w]<-base.colour
-      m<-matrix(plot.colours, ncol=length(lons), byrow=TRUE)
-      r.w<-max(lons)-min(lons)+(lons[2]-lons[1])
-      r.c<-(max(lons)+min(lons))/2
-      grid.raster(m,,
-                   x=unit(r.c,'native'),
-                   y=unit(0,'native'),
-                   width=unit(r.w,'native'),
-                   height=unit(180,'native'))  
-}
+
+get.member.at.hour<-function(variable,year,month,day,hour,member,version='4.1.8') {
+
+       t<-TWCR.get.members.slice.at.hour(variable,year,month,day,
+                                  hour,version=version)
+       t<-GSDF.select.from.1d(t,'ensemble',member)
+       gc()
+       return(t)
+  }
 
 WeatherMap.streamline.getGC<-function(value,transparency=NA,status=1,Options) {
    alpha<-c(10,50,150,255)[min(status,4)]
@@ -109,24 +150,6 @@ Draw.temperature<-function(temperature,Options,Trange=1) {
   Options.local$fog.colour<-c(0,0,1)
   WeatherMap.draw.fog(tminus,Options.local)
 }
-Draw.temperature<-function(temperature,Options,Trange=1) {
-
-  Options.local<-Options
-  Options.local$fog.min.transparency<-0.8
-  Options.local$fog.resolution<-0.25
-  tplus<-temperature
-  tplus$data[]<-pmax(0,pmin(Trange,tplus$data))
-  tplus$data[]<-sqrt(tplus$data[])/Trange
-  Options.local$fog.colour<-c(1,0,0)
-  WeatherMap.draw.fog(tplus,Options.local)
-  tminus<-temperature
-  tminus$data[]<-tminus$data*-1
-  tminus$data[]<-pmax(0,pmin(Trange,tminus$data))
-  tminus$data[]<-sqrt(tminus$data[])/Trange
-  Options.local$fog.colour<-c(0,0,1)
-  WeatherMap.draw.fog(tminus,Options.local)
-}
-
 
 Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
 
@@ -182,11 +205,22 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
 
 get.streamlines<-function(year,month,day,hour) {
 
-    sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d:%02d.rd",
-                           Stream.dir,year,month,day,as.integer(hour),as.integer((hour%%1)*60))
+
+    sf.name<-sprintf("%s/streamlines.%04d-%02d-%02d:%02d.rd",
+                           Stream.dir,year,month,day,as.integer(hour))
     if(file.exists(sf.name) && file.info(sf.name)$size>5000) {
        load(sf.name)
-      return(s)
+       hour.fraction<-hour-as.integer(hour)
+       # Fudge the streamlines for the fractional hour
+       if(hour.fraction>0) {
+          move.scale<-0.033*Options$wind.vector.points/Options$wind.vector.scale
+          move.scale<-move.scale*Options$wind.vector.move.scale*view.scale
+          for(p in seq(1,Options$wind.vector.points)) {
+           s[['x']][,p]<-s[['x']][,p]+(s[['x']][,2]-s[['x']][,1])*move.scale*hour.fraction
+           s[['y']][,p]<-s[['y']][,p]+(s[['y']][,2]-s[['y']][,1])*move.scale*hour.fraction
+         }
+       }
+       return(s)
     } else {
       stop(sprintf("No streamlines available for %04d-%02d-%02d:%02d",
                    year,month,day,as.integer(hour)))
@@ -204,17 +238,35 @@ plot.hour<-function(year,month,day,hour,streamlines) {
 
     land<-WeatherMap.get.land(Options)
     
-    t2m<-ERAI.get.slice.at.hour('air.2m',year,month,day,hour)
-    hour.fraction<-hour%%1
-    t2n<-ERAI.get.slice.at.hour('air.2m',year,month,day,hour,type='normal')
+    t2m<-get.member.at.hour('air.2m',year,month,day,hour,member,version=opt$version)
+    t2n<-get.V3.normal('air.2m',year,month,day,hour)
+    t2n<-GSDF.regrid.2d(t2n,t2m)
     t2m$data[]<-t2m$data-t2n$data
-    prmsl.T<-ERAI.get.slice.at.hour('prmsl',year,month,day,hour)
-    icec<-ERAI.get.slice.at.hour('icec',year,month,day,hour)
-    prate<-ERAI.get.slice.at.hour('prate',year,month,day,hour,fc.init='blend')
-    prate$data[]<-prate$data/3
+    pre<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
+                                  hour,version=opt$version)
+    prmsl.T<-GSDF.select.from.1d(pre,'ensemble',member)
+    prm<-GSDF.reduce.1d(pre,'ensemble',mean)
+    prm<-GSDF.select.from.1d(prm,'time',1)
+    prn<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,type='normal',version='3.4.1')
+    prn<-GSDF.regrid.2d(prn,prmsl.T)
+    prmsl.spread<-GSDF.reduce.1d(pre,'ensemble',sd)
+    prmsl.spread<-GSDF.select.from.1d(prmsl.spread,'time',1)
+    prmsl.sd<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,type='standard.deviation',
+                                     version='3.4.1')
+    prmsl.sd<-GSDF.regrid.2d(prmsl.sd,prmsl.T)
+    fog<-TWCR.relative.entropy(prn,prmsl.sd,prm,prmsl.spread)
+    fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+    #w<-which(fog$data<fog.threshold)
+    #fog$data[w]<-1
+    #fog$data[-w]<-0
+    icec<-get.member.at.hour('icec',year,month,day,hour,member,version=opt$version)
+    prate<-get.member.at.hour('prate',year,month,day,hour,member,version=opt$version)
+    obs<-TWCR.get.obs(year,month,day,hour,version=opt$version)
+    w<-which(obs$Longitude>180)
+    obs$Longitude[w]<-obs$Longitude[w]-360
   
      png(ifile.name,
-             width=1080*4/3,
+             width=1080*16/9,
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,
@@ -233,11 +285,13 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     
       ip<-WeatherMap.rectpoints(Options$ice.points,Options)
       WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
-      draw.land.flat(Options)
+      WeatherMap.draw.land(land,Options)
+      WeatherMap.draw.obs(obs,Options)
       WeatherMap.draw.streamlines(streamlines,Options)
        Draw.temperature(t2m,Options,Trange=10)
        WeatherMap.draw.precipitation(prate,Options)
-    Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
+       Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
+       WeatherMap.draw.fog(fog,Options)
     Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
     WeatherMap.draw.label(Options)
     dev.off()

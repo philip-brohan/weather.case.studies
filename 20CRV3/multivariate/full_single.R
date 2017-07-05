@@ -25,7 +25,10 @@ if ( is.null(opt$version) ){ opt$version='4.1.8' }
 member=1
 fog.threshold<-exp(1)
 
-Imagedir<-sprintf("%s/images/TWCR_multivariate.V3",Sys.getenv('SCRATCH'))
+# Fudge for using the V2 climatology
+air.2m.clim.correct<-readRDS('/scratch/hadpb/20CR/version_4.0.0/air.2m.normals.correction.Rdata')
+
+Imagedir<-sprintf("%s/images/TWCR_multivariate.V3.nf",Sys.getenv('SCRATCH'))
 Stream.dir<-sprintf("%s/images/TWCR_multivariate.V3",Sys.getenv('SCRATCH'))
 if(!file.exists(Imagedir)) dir.create(Imagedir,recursive=TRUE)
 
@@ -54,7 +57,7 @@ Options<-WeatherMap.set.option(Options,'wind.vector.move.scale',1)
 Options<-WeatherMap.set.option(Options,'wind.vector.density',1)
 Options$ice.points<-100000
 
-Options<-WeatherMap.set.option(Options,'obs.size',0.5)
+Options<-WeatherMap.set.option(Options,'obs.size',1.0)
 Options<-WeatherMap.set.option(Options,'obs.colour',rgb(255,215,0,255,
                                                        maxColorValue=255))
 Options<-WeatherMap.set.option(Options,'fog.colour',c(0.65,0.65,0.65))
@@ -67,6 +70,55 @@ Options$mslp.tpscale=500                    # Smaller -> contours less transpare
 Options$mslp.lwd=1
 Options$precip.colour=c(0,0.2,0)
 Options$label.xp=0.995
+
+get.V3.normal<-function(variable,year,month,day,hour) {
+  if(variable != 'air.2m') stop('Only air.2m climatology available')
+  n<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,type='normal',version='3.4.1')
+  adj<-air.2m.clim.correct[['00']]
+  n<-GSDF.regrid.2d(n,adj)
+  if(hour==0) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['00']]$data)
+    return(n)
+  }
+  if(hour<6) {
+    weight<-(hour)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['06']]$data)*weight +
+              as.vector(air.2m.clim.correct[['00']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==6) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['06']]$data)
+    return(n)
+  }
+  if(hour<12) {
+    weight<-(hour-6)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['12']]$data)*weight +
+              as.vector(air.2m.clim.correct[['06']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==12) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['12']]$data)
+    return(n)
+  }
+  if(hour<18) {
+    weight<-(hour-12)/6
+    n$data[]<-n$data +
+              as.vector(air.2m.clim.correct[['18']]$data)*weight +
+              as.vector(air.2m.clim.correct[['12']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==18) {
+    n$data[]<-n$data+as.vector(air.2m.clim.correct[['18']]$data)
+    return(n)
+  }
+  weight<-(hour-18)/6
+  n$data[]<-n$data +
+            as.vector(air.2m.clim.correct[['00']]$data)*weight +
+            as.vector(air.2m.clim.correct[['18']]$data)*(1-weight)
+  return(n)
+}
 
 get.member.at.hour<-function(variable,year,month,day,hour,member,version='4.1.8') {
 
@@ -187,7 +239,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     land<-WeatherMap.get.land(Options)
     
     t2m<-get.member.at.hour('air.2m',year,month,day,hour,member,version=opt$version)
-    t2n<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,type='normal',version='3.4.1')
+    t2n<-get.V3.normal('air.2m',year,month,day,hour)
     t2n<-GSDF.regrid.2d(t2n,t2m)
     t2m$data[]<-t2m$data-t2n$data
     pre<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
@@ -207,12 +259,11 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     #w<-which(fog$data<fog.threshold)
     #fog$data[w]<-1
     #fog$data[-w]<-0
-    #prmsl.T$data[]<-prmsl.T$data-prn$data
     icec<-get.member.at.hour('icec',year,month,day,hour,member,version=opt$version)
     prate<-get.member.at.hour('prate',year,month,day,hour,member,version=opt$version)
-    #obs<-TWCR.get.obs(year,month,day,hour,version='3.5.1')
-    #w<-which(obs$Longitude>180)
-    #obs$Longitude[w]<-obs$Longitude[w]-360
+    obs<-TWCR.get.obs(year,month,day,hour,version=opt$version)
+    w<-which(obs$Longitude>180)
+    obs$Longitude[w]<-obs$Longitude[w]-360
   
      png(ifile.name,
              width=1080*16/9,
@@ -239,7 +290,7 @@ plot.hour<-function(year,month,day,hour,streamlines) {
       WeatherMap.draw.streamlines(streamlines,Options)
        Draw.temperature(t2m,Options,Trange=10)
        WeatherMap.draw.precipitation(prate,Options)
-    Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
+       Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
        #WeatherMap.draw.fog(fog,Options)
     Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
     WeatherMap.draw.label(Options)
