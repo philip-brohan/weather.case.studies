@@ -4,11 +4,11 @@
 library(GSDF.TWCR)
 library(lubridate)
 
-var<-'air.2m'
+var<-'prmsl'
 
 # Assemble a mean correction for each time of day
 correction<-list()
-count<-rep(0,18)
+count<-rep(0,19)
 for(year in seq(1918,1918)) {
   for(month in seq(1,12)) {
     ndy<-lubridate::days_in_month(ymd(sprintf("%04d-%02d-15",year,month)))
@@ -20,6 +20,9 @@ for(year in seq(1918,1918)) {
         old.d<-TWCR.get.slice.at.hour(var,year,month,day,hour,version='3.5.1')
         old.d<-GSDF.regrid.2d(old.d,new.d)
         new.d$data[]<-new.d$data-old.d$data
+        if(is.na(mean(new.d$data))) {
+          stop(sprintf("Bad data %04d-%02d-%02d:%02d",year,month,day,hour))
+        }
         if(month==1 && day==1) {
           correction[[hr]]<-new.d
         } else {

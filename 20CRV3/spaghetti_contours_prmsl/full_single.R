@@ -49,10 +49,63 @@ Options<-WeatherMap.set.option(Options,'wrap.spherical',F)
 
 Options$mslp.base=0#101325                    # Base value for anomalies
 Options$mslp.range=50000                    # Anomaly for max contour
-Options$mslp.step=500                       # Smaller -> more contours
+Options$mslp.step=750                       # Smaller -> more contours
 Options$mslp.tpscale=500                    # Smaller -> contours less transparent
-Options$mslp.lwd=0.5
+Options$mslp.lwd=0.75
 Options$label.xp=0.995
+
+# Fudge for using the V2 climatology
+clim.correct<-list()
+clim.correct[['air.2m']]<-readRDS('/scratch/hadpb/20CR/version_4.0.0/air.2m.normals.correction.Rdata')
+clim.correct[['prmsl']]<-readRDS('/scratch/hadpb/20CR/version_4.0.0/prmsl.normals.correction.Rdata')
+
+get.V3.normal<-function(variable,year,month,day,hour) {
+  n<-TWCR.get.slice.at.hour(variable,year,month,day,hour,type='normal',version='3.4.1')
+  adj<-clim.correct[[variable]][['00']]
+  n<-GSDF.regrid.2d(n,adj)
+  if(hour==0) {
+    n$data[]<-n$data+as.vector(clim.correct[[variable]][['00']]$data)
+    return(n)
+  }
+  if(hour<6) {
+    weight<-(hour)/6
+    n$data[]<-n$data +
+              as.vector(clim.correct[[variable]][['06']]$data)*weight +
+              as.vector(clim.correct[[variable]][['00']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==6) {
+    n$data[]<-n$data+as.vector(clim.correct[[variable]][['06']]$data)
+    return(n)
+  }
+  if(hour<12) {
+    weight<-(hour-6)/6
+    n$data[]<-n$data +
+              as.vector(clim.correct[[variable]][['12']]$data)*weight +
+              as.vector(clim.correct[[variable]][['06']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==12) {
+    n$data[]<-n$data+as.vector(clim.correct[[variable]][['12']]$data)
+    return(n)
+  }
+  if(hour<18) {
+    weight<-(hour-12)/6
+    n$data[]<-n$data +
+              as.vector(clim.correct[[variable]][['18']]$data)*weight +
+              as.vector(clim.correct[[variable]][['12']]$data)*(1-weight)
+    return(n)
+  }
+  if(hour==18) {
+    n$data[]<-n$data+as.vector(clim.correct[[variable]][['18']]$data)
+    return(n)
+  }
+  weight<-(hour-18)/6
+  n$data[]<-n$data +
+            as.vector(clim.correct[[variable]][['00']]$data)*weight +
+            as.vector(clim.correct[[variable]][['18']]$data)*(1-weight)
+  return(n)
+}
 
 Draw.pressure<-function(mslp,Options,colour=c(0,0,0,1)) {
   
@@ -113,8 +166,7 @@ plot.hour<-function(year,month,day,hour) {
     
     pre<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
                                   hour,version=opt$version)
-    pn<-TWCR.get.slice.at.hour('prmsl',year,month,day,
-                                  hour,version='3.4.1',type='normal')
+    pn<-get.V3.normal('prmsl',year,month,day,hour)
     pn<-GSDF.regrid.2d(pn,GSDF.select.from.1d(pre,'ensemble',1))
     obs<-TWCR.get.obs(year,month,day,hour,version=opt$version)
     w<-which(obs$Longitude>180)
@@ -125,7 +177,7 @@ plot.hour<-function(year,month,day,hour) {
              height=1080,
              bg=Options$sea.colour,
              pointsize=24,
-             type='cairo')
+             type='cairo-png')
   base.gp<-gpar(family='Helvetica',font=1,col='black')
   lon.min<-Options$lon.min
   if(!is.null(Options$vp.lon.min)) lon.min<-Options$vp.lon.min
