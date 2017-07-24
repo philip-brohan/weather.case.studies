@@ -20,7 +20,7 @@ if ( is.null(opt$variable) )  { stop("Variable not specified") }
 if ( is.null(opt$month) )     { stop("Month not specified") }
 
 c.time<-lubridate::ymd_hms(sprintf("1981-%02d-01:00:00:00",opt$month))
-e.time<-c.time+lubridate::days(1)
+e.time<-c.time+months(1)
 while(c.time<e.time) {
   cmd<-sprintf("./make.V3.climatology.at.point.R --variable=%s --month=%d --day=%d --hour=%d",
                opt$variable,
@@ -33,6 +33,6 @@ while(c.time<e.time) {
 
 fn<-TWCR.climatology.get.file.name(opt$variable,opt$month,
                                    version='4.0.0')
-cmd<-sprintf("ncrcat %s/%s.*.*.nc %s",dirname(fn),opt$variable,fn)
+cmd<-sprintf("ncrcat -O %s/%s.*.*.nc %s",dirname(fn),opt$variable,fn)
 system(cmd)
 unlink(sprintf("%s/%s.*.*.nc",dirname(fn),opt$variable))
