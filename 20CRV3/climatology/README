@@ -1,4 +1,4 @@
-This directory contains scripts to estimate a 1981-2020 climatology for 20CRV3.
+This directory contains scripts to estimate a 1981-2010 climatology for 20CRV3.
 
 This would be easy if 20CRV3 had output for 1981-2010, but we don't yet have this - but we do have output for 2916-1919. So we need to estimate the climatology by applying a correction to the 20CRV2c climatology over 1981-2010. The correction appplied is the difference between V3 and V2c over 1916-1919 (where we have data for both).
 

@@ -1,0 +1,33 @@
+This directory contains scripts to estimate a 1981-2010 climatology for ERA5.
+
+This would be easy if ERA5 had output for 1981-2010, but we don't yet have this - but we do have output for 2010-2016. So we need to estimate the climatology by applying a correction to the ERA-Interim climatology over 1981-2010. The correction appplied is the difference between ERA5 and ERA-Interim over 2010-2016 (where we have data for both).
+
+So the algorithm is:
+
+1) Make climatology for ERA-Interim for 1981-2010.
+2) Make climatology for ERA-Interim for 2010-2016.
+3) Make climatology for ERA5 for 2010-2016
+
+4) Calculate 3)-2)+1) on the ERA5 grid - this is the climatology estimate.
+
+The script:
+ get_ERAI_1981-2016.R
+downloads the ERA Interim data needed
+
+Make the ERA Interim climatologies with (in R)
+ library(GSDF.ERAI)
+ ERAI.make.climatology('prmsl')
+ ERAI.make.climatology('prmsl',first.year=2010,last.year=2016)
+ ERAI.make.climatology('air.2m')
+ ERAI.make.climatology('air.2m',first.year=2010,last.year=2016)
+
+The script:
+ get_ERA5_2010-2016.R
+downloads the ERA5 data needed
+
+Make the ERA5 climatologies with (in R)
+ library(GSDF.ERA5)
+ ERA5.make.climatology('prmsl',first.year=2010,last.year=2016)
+ ERA5.make.climatology('air.2m',first.year=2010,last.year=2016)
+
+The scripts in this package make 4).
