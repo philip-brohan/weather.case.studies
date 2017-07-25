@@ -10,13 +10,13 @@ library(GSDF.WeatherMap)
 library(grid)
 library(getopt)
 
-opt = getopt(c(
+opt = getopt(matrix(c(
   'year',   'y', 2, "integer",
   'month',  'm', 2, "integer",
   'day',    'd', 2, "integer",
   'hour',   'h', 2, "numeric",
   'version','v', 2, "character"
-))
+), byrow=TRUE, ncol=4))
 if ( is.null(opt$year) )   { stop("Year not specified") }
 if ( is.null(opt$month) )  { stop("Month not specified") }
 if ( is.null(opt$day) )    { stop("Day not specified") }
@@ -68,60 +68,6 @@ Options$mslp.lwd=1
 Options$precip.colour=c(0,0.2,0)
 Options$label.xp=0.995
 
-# Fudge for using the V2 climatology
-clim.correct<-list()
-clim.correct[['air.2m']]<-readRDS('/scratch/hadpb/20CR/version_4.0.0/air.2m.normals.correction.Rdata')
-clim.correct[['prmsl']]<-readRDS('/scratch/hadpb/20CR/version_4.0.0/prmsl.normals.correction.Rdata')
-
-get.V3.normal<-function(variable,year,month,day,hour) {
-  n<-TWCR.get.slice.at.hour(variable,year,month,day,hour,type='normal',version='3.4.1')
-  adj<-clim.correct[[variable]][['00']]
-  n<-GSDF.regrid.2d(n,adj)
-  if(hour==0) {
-    n$data[]<-n$data+as.vector(clim.correct[[variable]][['00']]$data)
-    return(n)
-  }
-  if(hour<6) {
-    weight<-(hour)/6
-    n$data[]<-n$data +
-              as.vector(clim.correct[[variable]][['06']]$data)*weight +
-              as.vector(clim.correct[[variable]][['00']]$data)*(1-weight)
-    return(n)
-  }
-  if(hour==6) {
-    n$data[]<-n$data+as.vector(clim.correct[[variable]][['06']]$data)
-    return(n)
-  }
-  if(hour<12) {
-    weight<-(hour-6)/6
-    n$data[]<-n$data +
-              as.vector(clim.correct[[variable]][['12']]$data)*weight +
-              as.vector(clim.correct[[variable]][['06']]$data)*(1-weight)
-    return(n)
-  }
-  if(hour==12) {
-    n$data[]<-n$data+as.vector(clim.correct[[variable]][['12']]$data)
-    return(n)
-  }
-  if(hour<18) {
-    weight<-(hour-12)/6
-    n$data[]<-n$data +
-              as.vector(clim.correct[[variable]][['18']]$data)*weight +
-              as.vector(clim.correct[[variable]][['12']]$data)*(1-weight)
-    return(n)
-  }
-  if(hour==18) {
-    n$data[]<-n$data+as.vector(clim.correct[[variable]][['18']]$data)
-    return(n)
-  }
-  weight<-(hour-18)/6
-  n$data[]<-n$data +
-            as.vector(clim.correct[[variable]][['00']]$data)*weight +
-            as.vector(clim.correct[[variable]][['18']]$data)*(1-weight)
-  return(n)
-}
-
-
 get.member.at.hour<-function(variable,year,month,day,hour,member,version='4.1.8') {
 
        t<-TWCR.get.members.slice.at.hour(variable,year,month,day,
@@ -160,7 +106,7 @@ Draw.pressure<-function(mslp,Options,colour=c(0,0,0)) {
   lats<-M$dimensions[[GSDF.find.dimension(M,'lat')]]$values
   longs<-M$dimensions[[GSDF.find.dimension(M,'lon')]]$values
     # Need particular data format for contourLines
-  maxl<-Options$vp.lon.max+2
+  maxl<-Options$vp.lon.max+(longs[2]-longs[1])
   if(lats[2]<lats[1] || longs[2]<longs[1] || max(longs) > maxl ) {
     if(lats[2]<lats[1]) lats<-rev(lats)
     if(longs[2]<longs[1]) longs<-rev(longs)
@@ -241,30 +187,17 @@ plot.hour<-function(year,month,day,hour,streamlines) {
     land<-WeatherMap.get.land(Options)
     
     t2m<-get.member.at.hour('air.2m',year,month,day,hour,member,version=opt$version)
-    t2n<-get.V3.normal('air.2m',year,month,day,hour)
+    t2n<-TWCR.get.slice.at.hour('air.2m',year,month,day,hour,version='4.0.0',type='normal')
     t2n<-GSDF.regrid.2d(t2n,t2m)
-    t2m$data[]<-t2m$data-t2n$data
-    pre<-TWCR.get.members.slice.at.hour('prmsl',year,month,day,
-                                  hour,version=opt$version)
-    prmsl.T<-GSDF.select.from.1d(pre,'ensemble',member)
-    prm<-GSDF.reduce.1d(pre,'ensemble',mean)
-    prm<-GSDF.select.from.1d(prm,'time',1)
-    prn<-get.V3.normal('prmsl',year,month,day,hour)
-    prn<-GSDF.regrid.2d(prn,GSDF.select.from.1d(pre,'ensemble',1))
-    prmsl.T$data[]<-prmsl.T$data-as.vector(prn$data)
-    prmsl.spread<-GSDF.reduce.1d(pre,'ensemble',sd)
-    prmsl.spread<-GSDF.select.from.1d(prmsl.spread,'time',1)
-    prmsl.sd<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,type='standard.deviation',
-                                     version='3.4.1')
-    prmsl.sd<-GSDF.regrid.2d(prmsl.sd,prmsl.T)
-    fog<-TWCR.relative.entropy(prn,prmsl.sd,prm,prmsl.spread)
-    fog$data[]<-1-pmin(fog.threshold,pmax(0,fog$data))/fog.threshold
+    t2m$data[]<-as.vector(t2m$data)-as.vector(t2n$data)
     
+    pre<-get.member.at.hour('prmsl',year,month,day,hour,member,version=opt$version)
+    prn<-TWCR.get.slice.at.hour('prmsl',year,month,day,hour,version='4.0.0',type='normal')
+    prn<-GSDF.regrid.2d(prn,pre)
+    pre$data[]<-as.vector(pre$data)-as.vector(prn$data)
+   
     icec<-get.member.at.hour('icec',year,month,day,hour,member,version=opt$version)
     prate<-get.member.at.hour('prate',year,month,day,hour,member,version=opt$version)
-    obs<-TWCR.get.obs(year,month,day,hour,version=opt$version)
-    w<-which(obs$Longitude>180)
-    obs$Longitude[w]<-obs$Longitude[w]-360
   
      png(ifile.name,
              width=1080*16/9,
@@ -287,12 +220,10 @@ plot.hour<-function(year,month,day,hour,streamlines) {
       ip<-WeatherMap.rectpoints(Options$ice.points,Options)
       WeatherMap.draw.ice(ip$lat,ip$lon,icec,Options)
       WeatherMap.draw.land(land,Options)
-      #WeatherMap.draw.obs(obs,Options)
       WeatherMap.draw.streamlines(streamlines,Options)
        Draw.temperature(t2m,Options,Trange=10)
        WeatherMap.draw.precipitation(prate,Options)
-       Draw.pressure(prmsl.T,Options,colour=c(0,0,0))
-       #WeatherMap.draw.fog(fog,Options)
+       Draw.pressure(pre,Options,colour=c(0,0,0))
     Options$label=sprintf("%04d-%02d-%02d:%02d",year,month,day,as.integer(hour))
     WeatherMap.draw.label(Options)
     dev.off()

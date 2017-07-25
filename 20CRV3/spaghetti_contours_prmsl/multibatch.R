@@ -1,14 +1,16 @@
+#!/usr/bin/env Rscript
+
 # Run a load of rendering jobs on SPICE - keeping no more than 1000
 #  in the queue at once.
 
 library(lubridate)
 
-current.day<-ymd("1918-01-02")
+current.day<-ymd("1918-01-11")
 end.day<-ymd("1918-12-31")
 
 while(current.day<=end.day) {
   in.system<-system('squeue --user hadpb',intern=TRUE)
-  n.new.jobs<-500-length(in.system)
+  n.new.jobs<-300-length(in.system)
   if(n.new.jobs>100) {
       for(hour in seq(0,23.75,0.25)) {
           sink('multistart.step.slm')
