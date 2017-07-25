@@ -5,8 +5,8 @@
 
 library(lubridate)
 
-current.day<-ymd("1918-01-01")
-end.day<-ymd("1918-01-31")
+current.day<-ymd("1918-01-31")
+end.day<-ymd("1918-12-31")
 
 while(current.day<=end.day) {
   in.system<-system('squeue --user hadpb',intern=TRUE)
