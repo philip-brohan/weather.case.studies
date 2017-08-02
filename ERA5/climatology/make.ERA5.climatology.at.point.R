@@ -6,7 +6,8 @@
 
 # This script does this combination for a single hour.
 
-library(GSDF.TWCR)
+library(GSDF.ERAI)
+library(GSDF.ERA5)
 library(getopt)
 opt = getopt(matrix(c(
   'variable', 'v', 2, "character",
@@ -43,7 +44,6 @@ Override.hourly.get.file.name<-function(variable,year,month,day,hour,
                                         type='mean') {
    return(ERAI.climatology.get.file.name(variable=variable,
                                          month=month,
-                                         version=version,
                                          first.year=2010,
                                          last.year=2016))
 }
@@ -56,10 +56,10 @@ a<-ERAI.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
 
 Override.hourly.get.file.name<-function(variable,year,month,day,hour,
                                         fc.init=NULL,
+                                        stream='oper',
                                         type='mean') {
    return(ERA5.climatology.get.file.name(variable=variable,
                                          month=month,
-                                         version=version,
                                          first.year=2010,
                                          last.year=2016))
 }
