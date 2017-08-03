@@ -54,6 +54,8 @@ Options$mslp.lwd=1
 Options$precip.colour=c(0,0.2,0)
 Options$label.xp=0.995
 
+Options$fog.min.transparency<-1.0
+
 get.member.at.hour<-function(variable,year,month,day,hour,member,version='4.1.8') {
 
        t<-TWCR.get.members.slice.at.hour(variable,year,month,day,
