@@ -71,8 +71,8 @@ b<-ERA5.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
                           type='normal')
 
 # Regrid
-b<-GSDF.regrid.2d(b,a)
-c<-GSDF.regrid.2d(c,a)
+a<-GSDF.regrid.2d(a,b)
+c<-GSDF.regrid.2d(c,b)
 
 # Combine
 a$data[]<-as.vector(a$data)-as.vector(b$data)+as.vector(c$data)
