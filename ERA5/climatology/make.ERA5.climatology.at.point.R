@@ -51,7 +51,7 @@ assignInNamespace("ERAI.hourly.get.file.name",
                   Override.hourly.get.file.name,
                   ns="GSDF.ERAI")
 
-a<-ERAI.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
+b<-ERAI.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
                           type='normal')
 
 Override.hourly.get.file.name<-function(variable,year,month,day,hour,
@@ -67,12 +67,12 @@ assignInNamespace("ERA5.hourly.get.file.name",
                   Override.hourly.get.file.name,
                   ns="GSDF.ERA5")
 
-b<-ERA5.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
+a<-ERA5.get.slice.at.hour(opt$variable,1981,opt$month,opt$day,opt$hour,
                           type='normal')
 
 # Regrid
-a<-GSDF.regrid.2d(a,b)
-c<-GSDF.regrid.2d(c,b)
+b<-GSDF.regrid.2d(b,a)
+c<-GSDF.regrid.2d(c,a)
 
 # Combine
 a$data[]<-as.vector(a$data)-as.vector(b$data)+as.vector(c$data)
