@@ -7,10 +7,10 @@ library(GSDF.WeatherMap)
 library(chron)
 
 Year<-1918
-Month<-1
+Month<-6
 Day<-1
 Hour<-6
-n.total<-365*24
+n.total<-30*24#365*24
 version='4.1.8'
 
 c.date<-chron(dates=sprintf("%04d/%02d/%02d",Year,Month,Day),
