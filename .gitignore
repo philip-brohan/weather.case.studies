@@ -1,0 +1,21 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+*.png
+*.pdf
+*.slm
+*.out
+
+*.rd
+*.dat
+*.mp3
+*.R~
+
+
