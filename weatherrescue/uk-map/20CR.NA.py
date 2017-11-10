@@ -20,9 +20,9 @@ import virtualtime # fixes datetime to work pre-1900
 import datetime
 
 # Specify the data to plot
-year=1897
-month=11
-day=17
+year=1987
+month=10
+day=16
 hour=6
 member=1
 dte=datetime.datetime(year,month,day,hour)
@@ -84,11 +84,11 @@ c_dict = {'red'  : ((0.0, 0.0, 0.0),
                     (1.0, 0.3, 0.3)), 
           'blue' : ((0.0, 0.0, 0.0), 
                     (1.0, 0.0, 0.0)), 
-          'alpha': ((0.0, 0.0, 0.0), 
-                    (1.0, 1.0, 1.0)) 
+          'alpha': ((0.0, 0.0, 0.0),
+                    (0.2, 0.0, 0.0),
+                    (1.0, 0.95, 0.95)) 
 } 
 p_cmap= matplotlib.colors.LinearSegmentedColormap('p_cmap',c_dict)
-p_levels=numpy.arange(0.005,0.025,0.001)
 prate=twcr.get_slice_at_hour('prate',year,month,day,hour,
                              version='3.5.1',type='ensemble')
 c2=iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
@@ -98,7 +98,7 @@ prate.dim_coords[0].rename('member') # Can't have spaces in name
 pe=prate.extract(iris.Constraint(member=member))
 prate_p = pe.regrid(plot_cube,iris.analysis.Linear())
 prate_p.data=numpy.sqrt(prate_p.data)
-prate_p.data[numpy.where(prate_p.data>0.025)]=0.025
+#prate_p.data[numpy.where(prate_p.data>0.025)]=0.025
 lats=numpy.arange(extent[2]-2-resolution/2,extent[3]+2+resolution/2,resolution)
 lons=numpy.arange(extent[0]-2-resolution/2,extent[1]+2+resolution/2,resolution)
 ax.pcolorfast(lons, lats, prate_p.data, cmap=p_cmap,
@@ -178,13 +178,18 @@ obs_s['Latitude']=rp[:,1]
 for ob in obs_s.itertuples():
     ax.add_patch(Circle((getattr(ob, "Longitude"),
                          getattr(ob, "Latitude")),
-                        radius=0.1,color='black',
+                        radius=0.1,
+                        facecolor='yellow',
+                        edgecolor='black',
+                        alpha=0.85,
                         zorder=2.5))
 
 # Label the plot with a date
-ax.text(extent[0]*0.225+extent[1]*0.775,
-        extent[2]*0.975+extent[3]*0.025,
+ax.text(extent[0]*0.02+extent[1]*0.98,
+        extent[2]*0.98+extent[3]*0.02,
         dte.strftime("%A %-d %B %Y at %-H GMT"),
+        horizontalalignment='right',
+        verticalalignment='bottom',
         color='black',
         bbox=dict(facecolor=fig.get_facecolor(),
                   edgecolor=(1,1,1,0),
