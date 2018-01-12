@@ -49,8 +49,6 @@ canvas=FigureCanvas(fig)
 scale=30
 resolution=0.25
 extent=[scale*-1,scale,scale*-1/math.sqrt(2),scale/math.sqrt(2)]
-plot_cube=wm.make_dummy(extent,resolution,pole_latitude=177.5,pole_longitude=37.5)
-projection_iris=iris.coord_systems.RotatedGeogCS(37.5,177.5)
 
 ## Axes to provide range and coordinate system - fill the fig.
 ax = fig.add_axes([0,0,1,1],projection=projection)
@@ -70,14 +68,14 @@ land_img=ax.background_img(name='GreyT', resolution='low')
 prate=twcr.get_slice_at_hour('prate',year,month,day,hour,
                              version='3.5.1',type='ensemble')
 pe=prate.extract(iris.Constraint(member=member))
-prate_img=wm.plot_cmesh(ax,pe,extent,resolution,pole_longitude=177.5,pole_latitude=37.5)
+prate_img=wm.plot_cmesh(ax,pe)
 
 # Overplot the pressure as a contour plot
 prmsl=twcr.get_slice_at_hour('prmsl',year,month,day,hour,
                              version='3.5.1',type='ensemble')
 pe=prmsl.extract(iris.Constraint(member=member))
 pe.data=pe.data/100 # To hPa for labels
-CS=wm.plot_contour(ax,pe,extent,resolution,pole_longitude=177.5,pole_latitude=37.5,
+CS=wm.plot_contour(ax,pe,
                    levels=numpy.arange(870,1050,3),label=True)
 
 # Overplot the wind vectors as a quiver plot
@@ -87,7 +85,7 @@ ue=u.extract(iris.Constraint(member=member))
 v=twcr.get_slice_at_hour('vwnd.10m',year,month,day,hour,
                              version='3.5.1',type='ensemble')
 ve=v.extract(iris.Constraint(member=member))
-qv=wm.plot_quiver(ax,ue,ve,extent,resolution*4,pole_longitude=177.5,pole_latitude=37.5)
+qv=wm.plot_quiver(ax,ue,ve)
 
 # Add the observations
 obs=twcr.get_obs_1file(year,month,day,hour,'3.5.1')
@@ -95,11 +93,11 @@ obs=twcr.get_obs_1file(year,month,day,hour,'3.5.1')
 obs_s=obs.loc[(obs['Assimilation.indicator']==1) &
               ((obs['Latitude']>0) & (obs['Latitude']<90)) &
               ((obs['Longitude']>240) | (obs['Longitude']<100))].copy()
-wm.plot_obs(ax,obs_s,projection)
+wm.plot_obs(ax,obs_s)
 
 # Label the plot with a date
 label=dte.strftime("%A %-d %B %Y at %-H GMT")
-wm.plot_label(ax,label,extent,facecolor=fig.get_facecolor())
+wm.plot_label(ax,label,facecolor=fig.get_facecolor())
 
 # Output as png with no border
 fig.savefig('NA.%04d-%02d-%02d:%02d.MG.png' % (year,month,day,hour))
