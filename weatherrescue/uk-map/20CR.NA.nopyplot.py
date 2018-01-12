@@ -99,10 +99,6 @@ c_dict = {'red'  : ((0.0, 0.0, 0.0),
 p_cmap= matplotlib.colors.LinearSegmentedColormap('p_cmap',c_dict)
 prate=twcr.get_slice_at_hour('prate',year,month,day,hour,
                              version='3.5.1',type='ensemble')
-c2=iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-prate.coord('latitude').coord_system=c2
-prate.coord('longitude').coord_system=c2
-prate.dim_coords[0].rename('member') # Can't have spaces in name
 pe=prate.extract(iris.Constraint(member=member))
 prate_p = pe.regrid(plot_cube,iris.analysis.Linear())
 prate_p.data=numpy.sqrt(prate_p.data)
@@ -115,10 +111,6 @@ prate_img=ax.pcolorfast(lons, lats, prate_p.data, cmap=p_cmap,
 # Overplot the pressure as a contour plot
 prmsl=twcr.get_slice_at_hour('prmsl',year,month,day,hour,
                              version='3.5.1',type='ensemble')
-c2=iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-prmsl.coord('latitude').coord_system=c2
-prmsl.coord('longitude').coord_system=c2
-prmsl.dim_coords[0].rename('member') # Can't have spaces in name
 pe=prmsl.extract(iris.Constraint(member=member))
 prmsl_p = pe.regrid(plot_cube,iris.analysis.Linear())
 lats = prate_p.coord('latitude').points
@@ -136,16 +128,9 @@ cl=ax.clabel(CS, inline=1, fontsize=12, fmt='%d',zorder=5.1)
 # Overplot the wind vectors as a quiver plot
 u=twcr.get_slice_at_hour('uwnd.10m',year,month,day,hour,
                              version='3.5.1',type='ensemble')
-c2=iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
-u.coord('latitude').coord_system=c2
-u.coord('longitude').coord_system=c2
-u.dim_coords[0].rename('member') # Can't have spaces in name
 ue=u.extract(iris.Constraint(member=member))
 v=twcr.get_slice_at_hour('vwnd.10m',year,month,day,hour,
                              version='3.5.1',type='ensemble')
-v.coord('latitude').coord_system=c2
-v.coord('longitude').coord_system=c2
-v.dim_coords[0].rename('member') # Can't have spaces in name
 ve=v.extract(iris.Constraint(member=member))
 rw=rotate_winds(ue,ve,projection_iris)
 u_p = rw[0].regrid(plot_cube,iris.analysis.Linear())
