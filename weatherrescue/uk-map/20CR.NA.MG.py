@@ -46,7 +46,7 @@ fig=Figure(figsize=(22,22/math.sqrt(2)),              # Width, Height (inches)
 canvas=FigureCanvas(fig)
 
 # Extent - in rotated lat lon coordinates
-scale=30
+scale=40
 resolution=0.25
 extent=[scale*-1,scale,scale*-1/math.sqrt(2),scale/math.sqrt(2)]
 
@@ -85,7 +85,7 @@ ue=u.extract(iris.Constraint(member=member))
 v=twcr.get_slice_at_hour('vwnd.10m',year,month,day,hour,
                              version='3.5.1',type='ensemble')
 ve=v.extract(iris.Constraint(member=member))
-qv=wm.plot_quiver(ax,ue,ve)
+qv=wm.plot_quiver(ax,ue,ve,scale=0.5)
 
 # Add the observations
 obs=twcr.get_obs_1file(year,month,day,hour,'3.5.1')

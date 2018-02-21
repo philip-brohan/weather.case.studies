@@ -142,8 +142,8 @@ ve=v.extract(iris.Constraint(member=member))
 rw=rotate_winds(ue,ve,projection_iris)
 u_p = rw[0].regrid(plot_cube,iris.analysis.Linear())
 v_p = rw[1].regrid(plot_cube,iris.analysis.Linear())
-lats=numpy.arange(extent[2],extent[3],resolution*4)
-lons=numpy.arange(extent[0],extent[1],resolution*4)
+lats=numpy.arange(extent[2],extent[3],resolution*3)
+lons=numpy.arange(extent[0],extent[1],resolution*3)
 lons,lats = numpy.meshgrid(lons,lats)
 lons=lons.flatten()
 lats=lats.flatten()
@@ -160,6 +160,11 @@ qv=matplotlib.pyplot.quiver(lons,lats,u_i,v_i,
                             headwidth=1,
                             color=(0,0,0,0.25),
                             zorder=4.5)
+"""
+# Streamline plot
+sv=ax.streamplot(u_p.coord('longitude').points,u_p.coord('latitude').points,u_p.data,v_p.data,
+                 start_points=numpy.array([lons,lats]).T,density=5,maxlength=.1)
+"""
 
 # Add the observations
 obs=twcr.get_obs_1file(year,month,day,hour,'3.5.1')
