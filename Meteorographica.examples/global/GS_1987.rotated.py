@@ -31,15 +31,14 @@ member=1
 dte=datetime.datetime(year,month,day,hour)
 
 # set the region to plot
-projection=wm.AspectRotatedPole(pole_longitude=160.0,
+projection=ccrs.RotatedPole(pole_longitude=160.0,
                                 pole_latitude=45.0,
-                                central_rotated_longitude=-40.0,
-                                aspect=2)
+                                central_rotated_longitude=-40.0)
 
 # Define the page
 extent=[-180.0,180.0,-90.0,90.0]
 aspect=(extent[3]-extent[2])/(extent[1]-extent[0])
-fig=Figure(figsize=(22,22*aspect),              # Width, Height (inches)
+fig=Figure(figsize=(22,22*9/16),              # Width, Height (inches)
            dpi=100,
            facecolor=(0.88,0.88,0.88,1),
            edgecolor=None,
