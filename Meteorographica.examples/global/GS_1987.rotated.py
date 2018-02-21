@@ -14,6 +14,7 @@ import matplotlib.colors
 from matplotlib.patches import Circle
 import Meteorographica.data.twcr as twcr
 import cartopy
+import cartopy.mpl.geoaxes
 import cartopy.crs as ccrs
 import math
 import pandas
@@ -55,6 +56,7 @@ resolution=0.25
 ax = fig.add_axes([0,0,1,1],projection=projection)
 ax.set_axis_off()
 ax.set_extent(extent, crs=projection)
+ax.set_aspect('auto')
 
 # Set the background colour
 ax.background_patch.set_facecolor((0.88,0.88,0.88,1))
@@ -63,7 +65,7 @@ ax.background_patch.set_facecolor((0.88,0.88,0.88,1))
 wm.add_grid(ax,sep_major=5,sep_minor=2.5)
 
 # Plot the land
-land_img=ax.background_img(name='GreyT', resolution='low')
+land_img=wm.background_img(ax,name='GreyT', resolution='low', aspect='auto')
 
 # Plot the precip
 prate=twcr.get_slice_at_hour('prate',year,month,day,hour,
