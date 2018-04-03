@@ -146,8 +146,6 @@ prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
 prmsl_m.data=prmsl_m.data/100 # To hPa
 prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
 prmsl_s.data=prmsl_s.data/100
-# Mask out mean where uncertainties large
-prmsl_m.data[numpy.where(prmsl_s.data>3)]=numpy.nan
 CS=wm.plot_contour(ax_2c,prmsl_m,
                    levels=numpy.arange(870,1050,10),
                    colors='black',
@@ -190,8 +188,6 @@ prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
 prmsl_m.data=prmsl_m.data/100 # To hPa
 prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
 prmsl_s.data=prmsl_s.data/100
-# Mask out mean where uncertainties large
-prmsl_m.data[numpy.where(prmsl_s.data>3)]=numpy.nan
 CS=wm.plot_contour(ax_3,prmsl_m,
                    levels=numpy.arange(870,1050,10),
                    colors='black',

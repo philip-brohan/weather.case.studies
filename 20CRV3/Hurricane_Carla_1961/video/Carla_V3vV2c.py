@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Hong Kong region weather plot 
+# US region weather plot 
 # Compare pressures from 20CRV3 and 20CRV2c
 # Video version.
 
@@ -36,7 +36,7 @@ parser.add_argument("--day", help="Day of month",
 parser.add_argument("--hour", help="Time of day (0 to 23.99)",
                     type=float,required=True)
 parser.add_argument("--opdir", help="Directory for output files",
-                    default="%s/images/Typhoon_Nancy" % \
+                    default="%s/images/Hurricane_Carla" % \
                                            os.getenv('SCRATCH'),
                     type=str,required=False)
 args = parser.parse_args()
@@ -48,7 +48,7 @@ dte=datetime.datetime(args.year,args.month,args.day,
 
 # Select Nancy obs only
 def get_nancy(obs):
-   return obs[obs.Name=='NANCY']
+   return obs[obs.Name=='CARLA']
 
 # Show obs in use
 def plot_obs_thistime(ax,key_time,version,
@@ -119,8 +119,7 @@ fig=Figure(figsize=(10.8*aspect,10.8),  # Width, Height (inches)
            tight_layout=None)
 canvas=FigureCanvas(fig)
 
-# UK-centred projection
-projection=ccrs.RotatedPole(pole_longitude=320, pole_latitude=56)
+projection=ccrs.RotatedPole(pole_longitude=100, pole_latitude=56)
 scale=30
 extent=[scale*-1*aspect/2,scale*aspect/2,scale*-1,scale]
 
@@ -163,6 +162,10 @@ for m in range(1, 57):
 # Add the ensemble mean - with labels
 prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
 prmsl_m.data=prmsl_m.data/100 # To hPa
+prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
+prmsl_s.data=prmsl_s.data/100
+# Mask out mean where uncertainties large
+#prmsl_m.data[numpy.where(prmsl_s.data>3)]=numpy.nan
 CS=wm.plot_contour(ax_2c,prmsl_m,
                    levels=numpy.arange(870,1050,10),
                    colors='black',
@@ -203,6 +206,10 @@ for m in range(1,57): # Same number as 2c
 # Add the ensemble mean - with labels
 prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
 prmsl_m.data=prmsl_m.data/100 # To hPa
+prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
+prmsl_s.data=prmsl_s.data/100
+# Mask out mean where uncertainties large
+#prmsl_m.data[numpy.where(prmsl_s.data>3)]=numpy.nan
 CS=wm.plot_contour(ax_3,prmsl_m,
                    levels=numpy.arange(870,1050,10),
                    colors='black',
@@ -222,6 +229,6 @@ wm.plot_label(ax_3,
               horizontalalignment='right')
 
 # Output as png
-fig.savefig('%s/V3vV2c_Typhoon_Nancy_%04d%02d%02d%02d%02d.png' % 
+fig.savefig('%s/V3vV2c_Hurricane_Carla_%04d%02d%02d%02d%02d.png' % 
                (args.opdir,args.year,args.month,args.day,
                            int(args.hour),int(args.hour%1*60)))
