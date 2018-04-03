@@ -46,38 +46,66 @@ if not os.path.isdir(args.opdir):
 dte=datetime.datetime(args.year,args.month,args.day,
                       int(args.hour),int(args.hour%1*60))
 
-# Vary the obs plotted to show how close to time 
-def plot_obs_bytime(ax,obs,key_time,
+# Select Nancy obs only
+def get_nancy(obs):
+   return obs[obs.Name=='NANCY']
+
+# Show obs in use
+def plot_obs_thistime(ax,key_time,version,
+             ffn=None,
              obs_projection=ccrs.PlateCarree(),
              lat_label='Latitude',lon_label='Longitude',
              radius=0.1,
              facecolor='yellow',
              edgecolor='black',
              zorder=2.5):
-    rp=ax.projection.transform_points(obs_projection,
-                                   obs[lon_label].values,
-                                   obs[lat_label].values)
-    new_longitude=rp[:,0]
-    new_latitude=rp[:,1]
 
-    dtm=pandas.to_datetime(obs.UID.str.slice(0,10),format="%Y%m%d%H")
-    # Plot each ob as a circle
-    for i in range(0,len(new_longitude)):
-        # Transparency depends on proximity to plot time
+    # Obs for previous/current step
+    kto=key_time-datetime.timedelta(hours=key_time.hour%6)
+    obs=twcr.load_observations_1file(kto.year,
+                                     kto.month,
+                                     kto.day,
+                                     kto.hour,
+                                     version=version)
+    if ffn is not None:
+        obs=ffn(obs)
+    if not obs.empty:
         alpha=1
-        dth=(key_time-dtm.iloc[i]).total_seconds()/3600
-        if dth>9 or dth<-3: continue
-        if dth<0:
-            alpha=1+dth/3.0
-        if dth>6:
-            alpha=1-(dth-6)/3.0
-        ax.add_patch(matplotlib.patches.Circle((new_longitude[i],
-                                                new_latitude[i]),
-                                                radius=radius,
-                                                facecolor=facecolor,
-                                                edgecolor=edgecolor,
-                                                alpha=alpha,
-                                                zorder=zorder))
+        if version=='2c':
+            alpha=(6-key_time.hour%6-key_time.minute/60.0)/6.0
+        else:
+            if key_time.hour%6>3:
+                alpha=(3-key_time.hour%3-key_time.minute/60.0)/3.0
+        wm.plot_obs(ax,obs,
+                    radius=radius,
+                    facecolor=facecolor,
+                    edgecolor=edgecolor,
+                    alpha=alpha,
+                    zorder=zorder)
+
+    # Obs next step
+    kto=kto+datetime.timedelta(hours=6)
+    obs=twcr.load_observations_1file(kto.year,
+                                     kto.month,
+                                     kto.day,
+                                     kto.hour,
+                                     version=version)
+    if ffn is not None:
+        obs=ffn(obs)
+    if not obs.empty:
+        alpha=0
+        if version=='2c':
+            alpha=1+(key_time.hour%6+key_time.minute/60.0-6)/6.0
+        else:
+            if key_time.hour%6>3:
+                alpha=1+(key_time.hour%3+key_time.minute/60.0-3)/3.0
+        if alpha>0:
+            wm.plot_obs(ax,obs,
+                        radius=radius,
+                        facecolor=facecolor,
+                        edgecolor=edgecolor,
+                        alpha=alpha,
+                        zorder=zorder)
 
 # HD video size 1920x1080
 aspect=16.0/9.0
@@ -113,14 +141,10 @@ land_img_2c=ax_2c.background_img(name='GreyT', resolution='low')
 land_img_3=ax_3.background_img(name='GreyT', resolution='low')
 
 # Add the observations from 2c
-obs=twcr.load_observations(dte-datetime.timedelta(hours=10),
-                           dte+datetime.timedelta(hours=4),
-                           version='2c')
-plot_obs_bytime(ax_2c,obs,dte,radius=0.15)
-obs=obs[obs.Name=='NANCY']
-if not obs.empty:
-   plot_obs_bytime(ax_2c,obs,dte,radius=0.25,
-                    facecolor='red',zorder=12.6)
+plot_obs_thistime(ax_2c,dte,version='2c',radius=0.15)
+# Highlight the Nancy obs
+plot_obs_thistime(ax_2c,dte,version='2c',ffn=get_nancy,
+                  radius=0.25,facecolor='red',zorder=12.6)
 
 # load the 2c pressures
 prmsl=twcr.load('prmsl',args.year,args.month,args.day,args.hour,
@@ -158,14 +182,13 @@ wm.plot_label(ax_2c,'20CR v2c',
 # V3 panel
 
 # Add the observations from 3
-obs=twcr.load_observations(dte-datetime.timedelta(hours=20),
-                           dte+datetime.timedelta(hours=10),
+plot_obs_thistime(ax_3,dte,version='4.5.1',radius=0.15)
+# Highlight the Nancy obs
+plot_obs_thistime(ax_3,dte,version='4.5.1',ffn=get_nancy,
+                  radius=0.25,facecolor='red',zorder=12.6)
+obs=twcr.load_observations(dte-datetime.timedelta(hours=24),
+                           dte,
                            version='4.5.1')
-plot_obs_bytime(ax_3,obs,dte,radius=0.15)
-obs=obs[obs.Name=='NANCY']
-if not obs.empty:
-   plot_obs_bytime(ax_3,obs,dte,radius=0.25,
-                   facecolor='red',zorder=12.6)
 
 # load the V3 pressures
 prmsl=twcr.load('prmsl',args.year,args.month,args.day,args.hour,
