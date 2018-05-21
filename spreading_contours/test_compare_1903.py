@@ -99,34 +99,34 @@ contour_colour_dict = {'red'  : ((0.0, 0.0, 0.0),
                               'green' : ((0.0, 0.0, 0.0), 
                                         (1.0, 0.0, 0.0)), 
                               'alpha': ((0.0, 0.0, 0.0),
-                                        (1.0, 0.55, 0.55)) 
+                                        (1.0, 0.25, 0.25)) 
 } 
 contour_cmap= matplotlib.colors.LinearSegmentedColormap('p_cmap',contour_colour_dict)
 
-def plot_contour_spread(ax,prmsl,cmap,levels,scale=1,vmin=0,vmax=0.25,zorder=4):
+def plot_contour_spread(ax,prmsl,cmap,levels,scale=1,offset=0,threshold=0.025,zorder=4):
 
     prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
-    prmsl_m.data=prmsl_m.data/100.0 # To hPa
     prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
-    prmsl_s.data=prmsl_s.data/100.0
-    plot_cube=_make_dummy(ax_2c,0.1)
+    plot_cube=_make_dummy(ax,0.1)
     prmsl_mu = prmsl_m.regrid(plot_cube,iris.analysis.Linear())
     prmsl_su = prmsl_s.regrid(plot_cube,iris.analysis.Linear())
+    prmsl_su.data=numpy.maximum(0.1,prmsl_su.data+offset) # fixups for reanalysis biases
+    prmsl_su.data=prmsl_su.data*scale
     prmsl_u = prmsl_mu.copy()
     prmsl_u.data=prmsl_u.data*0.0
     prmsl_t = prmsl_mu.copy()
-    prmsl_t.data=prmsl_u.data*0.0
+    prmsl_t.data=prmsl_t.data*0.0
     for level in levels:
-        prmsl_t.data=scipy.stats.norm(prmsl_mu.data-level,prmsl_su.data).pdf(0)
+        prmsl_t.data=1-scipy.stats.norm.cdf(numpy.absolute(prmsl_mu.data-level)/prmsl_su.data)
         prmsl_u.data=numpy.maximum(prmsl_u.data,prmsl_t.data)
 
     lats = prmsl_u.coord('latitude').points
     lons = prmsl_u.coord('longitude').points
-    u_img=ax_2c.pcolorfast(lons, lats, prmsl_u.data, cmap=contour_cmap,
-                                vmin=0,vmax=0.25,zorder=zorder-1)
+    u_img=ax.pcolorfast(lons, lats, prmsl_u.data, cmap=contour_cmap,
+                         vmin=threshold-0.01,vmax=threshold+0.01,zorder=zorder-1)
     # Mask out mean where uncertainties large
-    prmsl_m.data[numpy.where(prmsl_s.data>7.5)]=numpy.nan
-    CS=wm.plot_contour(ax_2c,prmsl_m,
+    prmsl_mu.data[numpy.where(prmsl_su.data>7)]=numpy.nan
+    CS=wm.plot_contour(ax,prmsl_mu,
                        levels=levels,
                        colors='black',
                        label=True,
@@ -136,8 +136,9 @@ def plot_contour_spread(ax,prmsl,cmap,levels,scale=1,vmin=0,vmax=0.25,zorder=4):
 # load the 2c pressures
 prmsl=twcr.load('prmsl',year,month,day,hour,
                                 version='2c')
+prmsl.data=prmsl.data/100.0 # To hPa
 plot_contour_spread(ax_2c,prmsl,contour_cmap,numpy.arange(870,1050,10),
-                    scale=1,vmin=0,vmax=0.25)
+                    scale=3,offset=0,threshold=0.15)
 
 # 20CR2c label
 wm.plot_label(ax_2c,'20CR 2c',
@@ -147,37 +148,19 @@ wm.plot_label(ax_2c,'20CR 2c',
 
 # old-style panel
 
-obs=twcr.load_observations_fortime(dte,version='2c')
+obs=twcr.load_observations_fortime(dte,version='4.5.1')
 wm.plot_obs(ax_3,obs,radius=0.1)
 
 # load the V3 pressures
 prmsl=twcr.load('prmsl',year,month,day,hour,
-                                version='2c')
+                                version='4.5.1')
+prmsl.data=prmsl.data/100.0 # To hPa
 
-# For each ensemble member, make a contour plot
-for m in range(1,57): # Same number as 2c
-    prmsl_e=prmsl.extract(iris.Constraint(member=m))
-    prmsl_e.data=prmsl_e.data/100 # To hPa
-    CS=wm.plot_contour(ax_3,prmsl_e,
-                   levels=numpy.arange(870,1050,10),
-                   colors='blue',
-                   label=False,
-                   linewidths=0.1)
+plot_contour_spread(ax_3,prmsl,contour_cmap,numpy.arange(870,1050,10),
+                    scale=1,offset=0,threshold=0.15)
 
-# Add the ensemble mean - with labels
-prmsl_m=prmsl.collapsed('member', iris.analysis.MEAN)
-prmsl_m.data=prmsl_m.data/100 # To hPa
-prmsl_s=prmsl.collapsed('member', iris.analysis.STD_DEV)
-prmsl_s.data=prmsl_s.data/100
-# Mask out mean where uncertainties large
-#prmsl_m.data[numpy.where(prmsl_s.data>3)]=numpy.nan
-CS=wm.plot_contour(ax_3,prmsl_m,
-                   levels=numpy.arange(870,1050,10),
-                   colors='black',
-                   label=True,
-                   linewidths=2)
 
-wm.plot_label(ax_3,'20CR v2c',
+wm.plot_label(ax_3,'20CR v3',
                      facecolor=fig.get_facecolor(),
                      x_fraction=0.02,
                      horizontalalignment='left')
