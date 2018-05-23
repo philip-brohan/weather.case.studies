@@ -22,7 +22,7 @@ import Meteorographica.weathermap as wm
 import Meteorographica.data.twcr as twcr
 
 # Date to show
-year=1903
+year=1953
 month=2
 day=27
 hour=06
@@ -96,7 +96,7 @@ prmsl.data=prmsl.data/100.0 # To hPa
 wm.plot_contour_spread(ax_3,prmsl,
                     levels=numpy.arange(870,1050,10),
                     resolution=0.1,
-                    threshold=0.33,
+                    threshold=0.05,
                     line_threshold=7,
                     linewidths=2,
                     label=True,
